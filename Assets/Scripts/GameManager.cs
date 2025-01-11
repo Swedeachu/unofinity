@@ -145,6 +145,12 @@ public class GameManager : MonoBehaviour
   // only virtual so MessAroundGameManager can override this for messing stuff up
   public virtual void StartGame()
   {
+    // first thing to do is wait
+    var initialActions = new List<IAction>();
+    initialActions.Add(new DelayAction(3f));
+
+    actionBatchManager.AddBatch(initialActions);
+
     foreach (GameObject pileObject in nonMiddlePiles)
     {
       // Get the CardPile component from the pile object

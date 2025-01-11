@@ -52,7 +52,7 @@ public class MessAroundGameManager : GameManager
     }
 
     // Add a delay action before starting the next cycle
-    tossActions.Add(new DelayAction(1f));
+    tossActions.Add(new DelayAction(2f));
 
     // Add the batch to the ActionBatchManager
     actionBatchManager.AddBatch(tossActions);

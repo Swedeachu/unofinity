@@ -5,16 +5,20 @@ using System.Collections.Generic;
 public class ActionDisplayGUI : MonoBehaviour
 {
 
-  private bool showGUI = false; // Toggle for the GUI
+  [Header("GUI Settings")]
+  public bool showGUI = false; // Toggle for the GUI (editable default in the Inspector)
+  public float windowWidth = 400f; // Preset window width
+  public float windowHeight = 600f; // Preset window height
+
   private ActionBatchManager actionBatchManager;
   private ActionRunner actionRunner;
 
   private void Start()
   {
-    // Scan the scene for the GameManager object
+    // Locate the GameManager in the scene
     var gameManager = FindObjectOfType<GameManager>();
 
-    // bonkers hack to use reflection to force strip the field's address off the class instance
+    // Use reflection to access private fields
     if (gameManager != null)
     {
       actionBatchManager = gameManager.GetType()
@@ -54,8 +58,11 @@ public class ActionDisplayGUI : MonoBehaviour
   {
     if (!showGUI) return;
 
+    // Set the window size using public fields
+    ImGui.SetNextWindowSize(new Vector2(windowWidth, windowHeight), ImGuiCond.FirstUseEver);
+
     // Begin the GUI window
-    ImGui.Begin("Action Display");
+    ImGui.Begin("Action List", ImGuiWindowFlags.NoCollapse);
 
     if (actionBatchManager == null || actionRunner == null)
     {
@@ -64,14 +71,15 @@ public class ActionDisplayGUI : MonoBehaviour
       return;
     }
 
-    // Display Action Batch Manager Info
-    ImGui.Text("Action Batch Manager:");
+    // Static section for Action Batch Manager
+    ImGui.TextColored(new Vector4(0f, 1f, 1f, 1f), "Action Batch Manager");
     DisplayActionBatchManager();
 
-    ImGui.Text("\n");
+    // Separator between sections
+    ImGui.Separator();
 
-    // Display Action Runner Info
-    ImGui.Text("Action Runner:");
+    // Static section for Action Runner
+    ImGui.TextColored(new Vector4(0f, 1f, 0f, 1f), "Action Runner");
     DisplayActionRunner();
 
     ImGui.End();
@@ -79,7 +87,7 @@ public class ActionDisplayGUI : MonoBehaviour
 
   private void DisplayActionBatchManager()
   {
-    Queue<List<IAction>> batches = actionBatchManager.GetBatches(); 
+    Queue<List<IAction>> batches = actionBatchManager.GetBatches();
 
     if (batches.Count == 0)
     {
@@ -90,18 +98,25 @@ public class ActionDisplayGUI : MonoBehaviour
     int batchIndex = 0;
     foreach (var batch in batches)
     {
-      ImGui.TextColored(new Vector4(0f, 1f, 1f, 1f), $"Batch {batchIndex}");
+      // Add a section label for each batch
+      ImGui.Text($"Batch {batchIndex}");
+
+      int actionIndex = 1;
       foreach (var action in batch)
       {
-        ImGui.Text($"- {action.GetType().Name}");
+        ImGui.BulletText($"{actionIndex}. {action.GetType().Name}");
+        actionIndex++;
       }
       batchIndex++;
+
+      // Add spacing between batches
+      ImGui.Spacing();
     }
   }
 
   private void DisplayActionRunner()
   {
-    List<IAction> activeActions = actionRunner.GetActiveActions(); 
+    List<IAction> activeActions = actionRunner.GetActiveActions();
 
     if (activeActions.Count == 0)
     {
@@ -109,9 +124,11 @@ public class ActionDisplayGUI : MonoBehaviour
       return;
     }
 
+    int actionIndex = 1;
     foreach (var action in activeActions)
     {
-      ImGui.TextColored(new Vector4(0f, 1f, 0f, 1f), $"{action.GetType().Name} - In Progress");
+      ImGui.BulletText($"{actionIndex}. {action.GetType().Name}");
+      actionIndex++;
     }
   }
 

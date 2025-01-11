@@ -30,7 +30,8 @@ public class ActionRunner : MonoBehaviour
 
   public List<IAction> GetActiveActions()
   {
-    return new List<IAction>(activeActions); // Return a copy to prevent modification
+    // return new List<IAction>(activeActions); // Return a copy to prevent modification
+    return activeActions;
   }
 
 }

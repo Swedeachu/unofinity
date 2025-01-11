@@ -18,7 +18,8 @@ public class WaitForCompletionAction : IAction
 
   public void StartAction(Action onComplete)
   {
-    // nop
+    this.onComplete += onComplete; 
+    isComplete = false;
   }
 
   public void UpdateAction()
@@ -33,3 +34,4 @@ public class WaitForCompletionAction : IAction
   }
 
 }
+

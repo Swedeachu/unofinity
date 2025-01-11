@@ -46,17 +46,15 @@ public class ActionBatchManager
     var currentBatch = actionBatches.Dequeue();
     actionRunner.RunActions(currentBatch);
 
-    // Wait for all actions to complete in the batch before moving to the next
-    actionRunner.RunActions(new List<IAction>
-    {
-      new WaitForCompletionAction(currentBatch, ProcessNextBatch)
-    });
+    // Wrap the WaitForCompletionAction in its own batch
+    var waitForCompletionAction = new WaitForCompletionAction(currentBatch, ProcessNextBatch);
+    actionRunner.RunActions(new List<IAction> { waitForCompletionAction });
   }
 
   public Queue<List<IAction>> GetBatches()
   {
-    return new Queue<List<IAction>>(actionBatches); // Return a copy to prevent modification
+    // return new Queue<List<IAction>>(actionBatches); // Return a copy to prevent modification
+    return actionBatches;
   }
-
 
 }
