@@ -6,7 +6,7 @@ public class GameManager : MonoBehaviour
 {
 
   public CardCollection deck;
-  protected TMPro.TextMeshProUGUI deckTextComponent;
+  public TMPro.TextMeshProUGUI deckTextComponent;
   public GameObject deckObject;
 
   private List<GameObject> nonMiddlePiles = new List<GameObject>(); // All piles except for the middle pile

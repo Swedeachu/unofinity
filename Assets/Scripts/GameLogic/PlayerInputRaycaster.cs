@@ -30,7 +30,7 @@ public class PlayerInputRaycaster : MonoBehaviour
     if (Input.GetMouseButtonDown(0))
     {
       Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-      if (Physics.Raycast(ray, out RaycastHit hit, 100f))
+      if (Physics.Raycast(ray, out RaycastHit hit, 10000f))
       {
         CardData cardData = hit.collider.GetComponentInParent<CardData>();
         if (cardData != null)

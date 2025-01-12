@@ -2,43 +2,37 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-// moves a group of cards at once to a pile
-public class RemoveCardFromPileAction : IAction
+public class RemoveCardFromPileAction : RelayoutAction
 {
 
-  private CardPile pile;
   private GameObject cardToRemove;
-  private bool isComplete;
-  private Action onComplete;
 
-  public bool IsComplete => isComplete;
-
-  public RemoveCardFromPileAction(CardPile pile, GameObject cardObj)
+  public RemoveCardFromPileAction(CardPile pile, GameObject cardObj, float duration = 0.7f)
+      : base(pile, duration)
   {
-    this.pile = pile;
     this.cardToRemove = cardObj;
   }
 
-  public void StartAction(Action onComplete)
+  public override void StartAction(Action onComplete)
   {
-    isComplete = false;
     this.onComplete = onComplete;
-    // Remove the card
-    RemoveCardFromPile();
-    // Mark done
-    isComplete = true;
-    onComplete?.Invoke();
-  }
+    isComplete = false;
 
-  public void UpdateAction() { /* not used */ }
-
-  private void RemoveCardFromPile()
-  {
-    var cardList = new List<GameObject>(pile.cards);
+    // 1) Remove the card from the pile's array
+    var cardList = new List<GameObject>(targetPile.cards);
     if (cardList.Contains(cardToRemove))
     {
       cardList.Remove(cardToRemove);
-      pile.cards = cardList.ToArray();
+      targetPile.cards = cardList.ToArray();
+    }
+
+    // 2) Now that the card is removed, set up re-layout for the pile
+    SetupPileForRelayout();
+
+    // If the pile is empty, there's nothing to animate. Just finish immediately.
+    if (pileCards.Count == 0)
+    {
+      OnActionComplete();
     }
   }
 

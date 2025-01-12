@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -44,6 +45,9 @@ public class CardPile : MonoBehaviour
 
   public List<GameObject> GetPlayableCardsOn(Card card)
   {
+    // if no card, it's all of them we can play onto the empty pile as any of them work
+    if (card == null) return cards.ToList<GameObject>();
+
     List<GameObject> cs = new List<GameObject>();
 
     foreach (GameObject c in cards)

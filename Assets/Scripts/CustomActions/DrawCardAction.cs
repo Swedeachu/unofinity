@@ -1,47 +1,37 @@
 ﻿using System;
 using UnityEngine;
 
-// TODO: make this draw in proper spacing with the other cards in the target pile
-public class DrawCardAction : IAction
+public class DrawCardAction : RelayoutAction
 {
 
   private GameManager gm;
-  private CardPile targetPile; // The player's or AI's hand pile
-  private GameObject cardObject;
-  private Vector3 startPosition;
-  private Vector3 endPosition;
-  private float duration = 1.0f; // Time to complete the animation
-  private float elapsedTime;
-  private bool isComplete;
-  private Action onComplete;
 
-  public bool IsComplete => isComplete;
-
-  public DrawCardAction(GameManager gm, CardPile pile)
+  public DrawCardAction(GameManager gm, CardPile pile, float duration = 1.0f)
+      : base(pile, duration)
   {
     this.gm = gm;
-    this.targetPile = pile;
   }
 
-  public void StartAction(Action onComplete)
+  public override void StartAction(Action onComplete)
   {
-    isComplete = false;
     this.onComplete = onComplete;
-    elapsedTime = 0f;
+    isComplete = false;
 
-    // Draw from the deck
+    // 1) Draw from the deck
     Card drawnCard = gm.deck.Draw();
     if (drawnCard == null)
     {
-      Debug.LogWarning("Deck is empty - need to handle reshuffle or skip??");
+      Debug.LogWarning("Deck is empty - maybe handle reshuffle or skip");
       isComplete = true;
       onComplete?.Invoke();
       return;
     }
+    // Update text too
+    gm.deckTextComponent.text = gm.deck.Count.ToString() + " Cards";
 
-    // Create the card object
-    cardObject = gm.cardObjectBuilder.MakeCard(drawnCard);
-    if (cardObject == null)
+    // 2) Create the card gameobject & place it at deck position
+    GameObject newCard = gm.cardObjectBuilder.MakeCard(drawnCard);
+    if (newCard == null)
     {
       Debug.LogError("Failed to create card object!");
       isComplete = true;
@@ -49,58 +39,14 @@ public class DrawCardAction : IAction
       return;
     }
 
-    // Set start and end positions
-    startPosition = gm.deckObject.transform.position;
-    endPosition = CalculateTargetPosition();
+    newCard.transform.position = gm.deckObject.transform.position;
 
-    // Place the card at the start position initially
-    cardObject.transform.position = startPosition;
-  }
+    // 3) Add that new card to the pile so the final layout includes it
+    targetPile.AddCard(newCard);
 
-  public void UpdateAction()
-  {
-    if (isComplete || cardObject == null) return;
-
-    // Animate the movement
-    elapsedTime += Time.deltaTime;
-    float t = Mathf.Clamp01(elapsedTime / duration);
-
-    // Smooth animation using ease-out curve
-    float easedT = EaseOutCubic(t);
-    cardObject.transform.position = Vector3.Lerp(startPosition, endPosition, easedT);
-
-    // If animation is complete
-    if (t >= 1f)
-    {
-      // Add card to the player's pile
-      targetPile.AddCard(cardObject);
-
-      isComplete = true;
-      onComplete?.Invoke();
-    }
-  }
-
-  private Vector3 CalculateTargetPosition()
-  {
-    // Calculate the target position based on the pile's spread type
-    Vector3 basePosition = targetPile.transform.position;
-
-    if (targetPile.spreadType == SpreadType.LeftToRight)
-    {
-      // Calculate offset for the card's position in the hand
-      int totalCards = targetPile.cards.Length + 1; // Include the new card
-      float totalWidth = (totalCards - 1) * 1.2f; // Spacing of 1.2 units
-      float startX = -totalWidth / 2; // Center the cards
-      return basePosition + new Vector3(startX + (totalCards - 1) * 1.2f, 0, 0);
-    }
-
-    // Default to stack at the base position
-    return basePosition;
-  }
-
-  private float EaseOutCubic(float t)
-  {
-    return 1 - Mathf.Pow(1 - t, 3);
+    // 4) Setup re-layout (the new card is in the list, 
+    //    so we can animate the entire pile including the newly drawn card)
+    SetupPileForRelayout();
   }
 
 }

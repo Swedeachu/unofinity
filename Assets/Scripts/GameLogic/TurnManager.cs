@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -40,11 +41,24 @@ public class TurnManager
 
     Debug.Log($"[TurnManager] Next Turn: {p.Name} (ID: {p.ID}, IsHuman: {p.IsHuman})");
 
-    // If human, we rely on the PlayerInputRaycaster to handle playing or drawing
-    // The TurnManager just sets this flag so the UI code knows it's permissible.
     if (p.IsHuman)
     {
-      playerAllowedToClick = true;
+      // First, check if they can play at least one card.
+      // If not, do the auto draw-play loop and end turn.
+      GameObject topCardObject = middlePile.GetTopCard();
+      Card topCard = topCardObject ? topCardObject.GetComponent<CardData>().card : null;
+      List<GameObject> playableCards = p.CardPile.GetPlayableCardsOn(topCard);
+
+      if (playableCards.Count > 0)
+      {
+        // They can play, so let them click in the UI
+        playerAllowedToClick = true;
+      }
+      else
+      {
+        // They cannot play anything, so do the auto-draw-then-play logic
+        AttemptPlayOrDraw(p, EndCurrentPlayerTurn);
+      }
     }
     else
     {
@@ -56,34 +70,61 @@ public class TurnManager
   private void HandleAIPlay(Player aiPlayer)
   {
     GameObject topCardObject = middlePile.GetTopCard();
-    Card topCard = topCardObject.GetComponent<CardData>().card;
+    Card topCard = topCardObject?.GetComponent<CardData>().card;
 
     if (topCard == null)
     {
-      // if no card, we can play whatever card we want in our hand, so we just do the first (this isn't very strategic) 
+      // If no card in the middle, just play the first card from hand
       GameObject firstCard = aiPlayer.CardPile.GetTopCard();
       PlayCardToMiddlePile(firstCard);
     }
     else
     {
-      // get the possible cards in our hand we can play
       List<GameObject> playableCards = aiPlayer.CardPile.GetPlayableCardsOn(topCard);
 
       if (playableCards.Count > 0)
       {
-        // play the first possible card in the hand onto the middle pile (also not very strategic) 
+        // Play the first possible card
         GameObject firstCard = playableCards[0];
         PlayCardToMiddlePile(firstCard);
       }
       else
       {
-        // draw cards until we get a possible card and then automatically play it (TODO with actions later)
+        // If no playable card, keep drawing until we get one, then auto-play
+        AttemptPlayOrDraw(aiPlayer, EndCurrentPlayerTurn);
       }
     }
   }
 
+  private void AttemptPlayOrDraw(Player p, Action onComplete)
+  {
+    // Check the top card (could be null if middle pile is empty)
+    GameObject topCardObj = middlePile.GetTopCard();
+    Card topCard = topCardObj ? topCardObj.GetComponent<CardData>().card : null;
+
+    List<GameObject> playableCards = p.CardPile.GetPlayableCardsOn(topCard);
+
+    if (playableCards.Count > 0)
+    {
+      // Auto-play the first valid card
+      PlayCardToMiddlePile(playableCards[0], onComplete);
+    }
+    else
+    {
+      // No playable card, so we must draw.
+      var drawAction = new DrawCardAction(gameManager, p.CardPile);
+      gameManager.actionBatchManager.AddBatch(new List<IAction> { drawAction });
+
+      // After drawing completes, try again
+      gameManager.actionBatchManager.StartProcessing(() =>
+      {
+        AttemptPlayOrDraw(p, onComplete);
+      });
+    }
+  }
+
   // this ends the current players turn 
-  private void PlayCardToMiddlePile(GameObject cardObj)
+  private void PlayCardToMiddlePile(GameObject cardObj, Action onComplete = null)
   {
     var actions = new List<IAction>();
 
@@ -94,7 +135,13 @@ public class TurnManager
     actions.Add(new MoveCardToPileAction(cardObj, middlePile));
 
     gameManager.actionBatchManager.AddBatch(actions);
-    gameManager.actionBatchManager.StartProcessing(EndCurrentPlayerTurn);
+
+    // If onComplete is null, default to ending the turn
+    gameManager.actionBatchManager.StartProcessing(() =>
+    {
+      if (onComplete != null) onComplete();
+      else EndCurrentPlayerTurn();
+    });
   }
 
   public void EndCurrentPlayerTurn()
