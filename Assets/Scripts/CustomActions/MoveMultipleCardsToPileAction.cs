@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MoveToPileAction : IAction
+public class MoveMultipleCardsToPileAction : IAction
 {
 
   private List<GameObject> cards;
@@ -18,7 +18,7 @@ public class MoveToPileAction : IAction
 
   public bool IsComplete => isComplete;
 
-  public MoveToPileAction(List<GameObject> cards, CardPile targetPile, float duration = 1f)
+  public MoveMultipleCardsToPileAction(List<GameObject> cards, CardPile targetPile, float duration = 1f)
   {
     this.cards = cards;
     this.targetPile = targetPile;

@@ -18,16 +18,10 @@ public class ActionDisplayGUI : MonoBehaviour
     // Locate the GameManager in the scene
     var gameManager = FindObjectOfType<GameManager>();
 
-    // Use reflection to access private fields
     if (gameManager != null)
     {
-      actionBatchManager = gameManager.GetType()
-          .GetField("actionBatchManager", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-          ?.GetValue(gameManager) as ActionBatchManager;
-
-      actionRunner = gameManager.GetType()
-          .GetField("actionRunner", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-          ?.GetValue(gameManager) as ActionRunner;
+      actionBatchManager = gameManager.actionBatchManager;
+      actionRunner = gameManager.actionRunner;
     }
     else
     {

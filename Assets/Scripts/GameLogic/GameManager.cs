@@ -5,18 +5,22 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
 
-  protected CardCollection deck;
+  public CardCollection deck;
   protected TMPro.TextMeshProUGUI deckTextComponent;
-  protected GameObject deckObject;
+  public GameObject deckObject;
 
   private List<GameObject> nonMiddlePiles = new List<GameObject>(); // All piles except for the middle pile
   private GameObject playerPile; // The special case pile controlled by the player
   private GameObject middlePile; // The pile all the cards go to
 
-  protected ActionBatchManager actionBatchManager; // Manages batches of actions
-  protected ActionRunner actionRunner; // Executes individual actions
+  public ActionBatchManager actionBatchManager; // Manages batches of actions
+  public ActionRunner actionRunner; // Executes individual actions
 
   public CardObjectBuilder cardObjectBuilder;
+
+  private TurnManager turnManager;
+
+  private List<Player> playerList = new List<Player>();
 
   private void Awake()
   {
@@ -24,6 +28,8 @@ public class GameManager : MonoBehaviour
     actionBatchManager = new ActionBatchManager(actionRunner);
 
     deck = new CardCollection();
+
+    turnManager = new TurnManager(this);
   }
 
   private void Start()
@@ -86,44 +92,47 @@ public class GameManager : MonoBehaviour
     // Find all GameObjects with a CardPile component
     CardPile[] allPiles = FindObjectsOfType<CardPile>();
 
+    int ids = -1;
+
     foreach (var pile in allPiles)
     {
       switch (pile.pileType)
       {
         case PileType.Player_Pile:
 
-        if (playerPile == null)
-        {
-          playerPile = pile.gameObject;
-          Debug.Log("Assigned Player Pile");
-        }
-        else
-        {
-          Debug.LogError("Multiple Player_Pile detected in the scene!");
-        }
-
-        // also needs to be added here
-        nonMiddlePiles.Add(pile.gameObject);
-        break;
+          if (playerPile == null)
+          {
+            playerPile = pile.gameObject;
+            playerList.Add(new Player(++ids, true, "Player #" + ids, pile));
+            Debug.Log("Assigned Player Pile");
+          }
+          else
+          {
+            Debug.LogError("Multiple Player_Pile detected in the scene!");
+          }
+          // also needs to be added to the non middle piles list
+          nonMiddlePiles.Add(pile.gameObject);
+          break;
 
         case PileType.Middle_Pile:
 
-        if (middlePile == null)
-        {
-          middlePile = pile.gameObject;
-          Debug.Log("Assigned Middle Pile");
-        }
-        else
-        {
-          Debug.LogError("Multiple Middle_Pile detected in the scene!");
-        }
-        break;
+          if (middlePile == null)
+          {
+            middlePile = pile.gameObject;
+            Debug.Log("Assigned Middle Pile");
+          }
+          else
+          {
+            Debug.LogError("Multiple Middle_Pile detected in the scene!");
+          }
+          break;
 
         default:
 
-        nonMiddlePiles.Add(pile.gameObject);
-        Debug.Log("Assigned Non-Middle Pile");
-        break;
+          playerList.Add(new Player(++ids, false, "Player #" + ids, pile));
+          nonMiddlePiles.Add(pile.gameObject);
+          Debug.Log("Assigned Non-Middle Pile");
+          break;
 
       }
     }
@@ -147,7 +156,7 @@ public class GameManager : MonoBehaviour
   {
     // first thing to do is wait
     var initialActions = new List<IAction>();
-    initialActions.Add(new DelayAction(3f));
+    initialActions.Add(new DelayAction(1f));
 
     actionBatchManager.AddBatch(initialActions);
 
@@ -184,15 +193,30 @@ public class GameManager : MonoBehaviour
       }
 
       // Create a MoveToPile action for all cards at once
-      var moveToPileAction = new MoveToPileAction(cardsToAdd, pile);
+      var moveToPileAction = new MoveMultipleCardsToPileAction(cardsToAdd, pile);
       actionBatchManager.AddBatch(new List<IAction> { moveToPileAction });
     }
 
     // update
     deckTextComponent.text = deck.Count.ToString() + " Cards";
 
-    // Start processing all action batches
-    actionBatchManager.StartProcessing();
+    // Start processing all action batches, and calls back the turn manager on finishing
+    actionBatchManager.StartProcessing(turnManager.OnAllInitialDealsComplete);
+  }
+
+  public GameObject GetMiddlePile()
+  {
+    return middlePile;
+  }
+
+  public List<Player> GetPlayers()
+  {
+    return playerList;
+  }
+
+  public TurnManager GetTurnManager()
+  {
+    return turnManager;
   }
 
 }
