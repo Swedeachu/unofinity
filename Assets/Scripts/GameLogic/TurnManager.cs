@@ -22,7 +22,7 @@ public class TurnManager
   public void OnAllInitialDealsComplete()
   {
     Debug.Log("All initial deals complete. Starting turns...");
-    currentPlayerIndex = math.max(gameManager.GetPlayers().Count - 1, 0); // should make things wrap around back to 0 for the human
+    currentPlayerIndex = math.max((gameManager.GetPlayers().Count - 1) / 2, 0); 
 
     middlePile = gameManager.GetMiddlePile().GetComponent<CardPile>();
 
@@ -127,6 +127,17 @@ public class TurnManager
   private void PlayCardToMiddlePile(GameObject cardObj, Action onComplete = null)
   {
     var actions = new List<IAction>();
+
+    // need to make the card appear face up as it is now played
+    var cardData = cardObj.GetComponent<CardData>();
+    if (cardData != null)
+    {
+      gameManager.cardObjectBuilder.SetCardPropertiesFaceUp(cardObj, cardData.card);
+    }
+    else
+    {
+      Debug.LogError("Could not find card data component when making card face up");
+    }
 
     // 1) remove from player's pile
     actions.Add(new RemoveCardFromPileAction(CurrentPlayer.CardPile, cardObj));

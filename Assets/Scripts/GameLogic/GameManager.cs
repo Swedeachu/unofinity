@@ -21,6 +21,7 @@ public class GameManager : MonoBehaviour
   private TurnManager turnManager;
 
   private List<Player> playerList = new List<Player>();
+  public List<string> playerOrder; // Names of the piles in the desired order which is configurable in the editor
 
   private void Awake()
   {
@@ -148,6 +149,36 @@ public class GameManager : MonoBehaviour
       Debug.LogError("No Middle_Pile found in the scene!");
     }
 
+    // After assigning the piles, sort the playerList based on the configured order
+    if (playerOrder != null && playerOrder.Count > 0)
+    {
+      playerList.Sort((p1, p2) =>
+      {
+        string name1 = p1.CardPile.gameObject.name;
+        string name2 = p2.CardPile.gameObject.name;
+
+        // Find the indices in the configured order
+        int index1 = playerOrder.IndexOf(name1);
+        int index2 = playerOrder.IndexOf(name2);
+
+        // If a name is not in the order list, it will be sorted to the end
+        index1 = index1 == -1 ? int.MaxValue : index1;
+        index2 = index2 == -1 ? int.MaxValue : index2;
+
+        // Compare the indices to determine order
+        return index1.CompareTo(index2);
+      });
+    }
+
+    // Log the sorted list
+    string plrs = "";
+    for (int i = 0; i < playerList.Count; i++)
+    {
+      Player p = playerList[i];
+      plrs += $"{p.CardPile.gameObject.name} | Index: {i} | IsHuman: {p.IsHuman}\n";
+    }
+    Debug.Log("Sorted Player List:\n" + plrs);
+
     Debug.Log($"Found {nonMiddlePiles.Count} Non-Middle Piles.");
   }
 
@@ -176,13 +207,16 @@ public class GameManager : MonoBehaviour
       {
         if (deck.Count == 0)
         {
-          Debug.LogError("Deck is empty!"); // maybe not an error, just trigger some sort of reshuffle/refill action
+          Debug.LogWarning("Deck is empty!"); // maybe not an error, just trigger some sort of reshuffle/refill action
           return;
         }
 
+        // should make a debug setting later on to make cards always face up no matter what
+        bool faceUp = pile.pileType == PileType.Player_Pile;
+
         // Draw a card from the deck and create its GameObject
         Card card = deck.Draw();
-        GameObject cardObject = cardObjectBuilder.MakeCard(card);
+        GameObject cardObject = cardObjectBuilder.MakeCard(card, faceUp);
         cardObject.transform.position = deckObject.transform.position;
 
         // Add the card to the pile's list (internally for tracking)
@@ -193,7 +227,7 @@ public class GameManager : MonoBehaviour
       }
 
       // Create a MoveToPile action for all cards at once
-      var moveToPileAction = new MoveMultipleCardsToPileAction(cardsToAdd, pile);
+      var moveToPileAction = new MoveCardToPileAction(cardsToAdd[0], pile);
       actionBatchManager.AddBatch(new List<IAction> { moveToPileAction });
     }
 

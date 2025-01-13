@@ -18,7 +18,9 @@ public class MoveCardToPileAction : RelayoutAction
     isComplete = false;
 
     // 1) Immediately add this card to the pile so the final layout includes it
-    targetPile.AddCard(cardToMove);
+
+    // actually sometimes we don't need to add the card to the pile, so I made the CardPile class do a contains check internall when Add is called
+    targetPile.AddCard(cardToMove); 
 
     // 2) Setup the re-layout so every card in targetPile shifts accordingly
     SetupPileForRelayout();

@@ -439,7 +439,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 421995c98a6657748a50487a1fd67c8e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  deckTextComponent: {fileID: 0}
+  deckObject: {fileID: 0}
+  actionRunner: {fileID: 0}
   cardObjectBuilder: {fileID: 11400000, guid: 60583f14dbe18c8469de18270e8eb2a6, type: 2}
+  playerOrder: []
   numCardsToDraw: 30
   tossRadius: 5
   tossDuration: 1.5
@@ -514,6 +518,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: PlayerPile
+      objectReference: {fileID: 0}
+    - target: {fileID: 5855080679458556304, guid: 3e0122100f0f4dc42a19a4e17be90d08,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8177690572838448594, guid: 3e0122100f0f4dc42a19a4e17be90d08,
         type: 3}
@@ -597,6 +606,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: AI_One_Pile
+      objectReference: {fileID: 0}
+    - target: {fileID: 5855080679458556304, guid: 3e0122100f0f4dc42a19a4e17be90d08,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8177690572838448594, guid: 3e0122100f0f4dc42a19a4e17be90d08,
         type: 3}
@@ -738,6 +752,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: MiddlePile
+      objectReference: {fileID: 0}
+    - target: {fileID: 5855080679458556304, guid: 3e0122100f0f4dc42a19a4e17be90d08,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8177690572838448594, guid: 3e0122100f0f4dc42a19a4e17be90d08,
         type: 3}

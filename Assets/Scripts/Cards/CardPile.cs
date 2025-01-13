@@ -18,9 +18,11 @@ public class CardPile : MonoBehaviour
 
   public void AddCard(GameObject card)
   {
+    if (ContainsCard(card)) return; // major safety check or things shit the bed
+
     var cardsList = new List<GameObject>(cards) { card };
     cards = cardsList.ToArray();
-    Debug.Log($"Added a card to {pileType}. Total cards: {cards.Length}");
+    // Debug.Log($"Added a card to {pileType}. Total cards: {cards.Length}");
   }
 
   public GameObject RemoveCard()
@@ -31,10 +33,12 @@ public class CardPile : MonoBehaviour
     var card = cardsList[0];
     cardsList.RemoveAt(0);
     cards = cardsList.ToArray();
-    Debug.Log($"Removed a card from {pileType}. Total cards: {cards.Length}");
+    // Debug.Log($"Removed a card from {pileType}. Total cards: {cards.Length}");
 
     return card;
   }
+
+  public bool ContainsCard(GameObject card) { return cards.Contains(card); }
 
   public GameObject GetTopCard()
   {

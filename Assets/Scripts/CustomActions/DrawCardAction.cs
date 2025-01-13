@@ -29,8 +29,11 @@ public class DrawCardAction : RelayoutAction
     // Update text too
     gm.deckTextComponent.text = gm.deck.Count.ToString() + " Cards";
 
+    // should make a debug setting later on to make cards always face up no matter what
+    bool faceUp = targetPile.pileType == PileType.Player_Pile;
+
     // 2) Create the card gameobject & place it at deck position
-    GameObject newCard = gm.cardObjectBuilder.MakeCard(drawnCard);
+    GameObject newCard = gm.cardObjectBuilder.MakeCard(drawnCard, faceUp);
     if (newCard == null)
     {
       Debug.LogError("Failed to create card object!");

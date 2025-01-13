@@ -24,7 +24,7 @@ public class MessAroundGameManager : GameManager
 
       // Draw a card from the deck
       Card card = deck.Draw();
-      GameObject cardObject = cardObjectBuilder.MakeCard(card);
+      GameObject cardObject = cardObjectBuilder.MakeCard(card, true);
       cardObject.transform.position = deckObject.transform.position;
 
       // Add the card to the active cards list
