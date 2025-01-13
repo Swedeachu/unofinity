@@ -62,7 +62,7 @@ public class CardObjectBuilder : ScriptableObject
     var renderer = cardObject.GetComponentInChildren<Renderer>();
     if (renderer != null)
     {
-      renderer.material.color = Color.white;
+      renderer.material.color = Color.gray;
     }
   }
 
@@ -98,7 +98,7 @@ public class CardObjectBuilder : ScriptableObject
       case Card.CardColor.Yellow:
         return Color.yellow;
       default:
-        return Color.white;
+        return Color.gray;
     }
   }
 

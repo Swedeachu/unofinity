@@ -39,18 +39,21 @@ public abstract class RelayoutAction : IAction
     elapsedTime += Time.deltaTime;
     float t = Mathf.Clamp01(elapsedTime / duration);
 
+    // Apply easing for smooth deceleration
+    float easedT = EaseOutCubic(t);
+
     // Lerp every card in the pile from start to end position AND rotation
     for (int i = 0; i < pileCards.Count; i++)
     {
       if (pileCards[i] == null) continue;
 
-      // Position
+      // Position with eased interpolation
       pileCards[i].transform.position =
-          Vector3.Lerp(startPositions[i], endPositions[i], t);
+          Vector3.Lerp(startPositions[i], endPositions[i], easedT);
 
-      // Rotation
+      // Rotation with eased interpolation
       pileCards[i].transform.rotation =
-          Quaternion.Slerp(startRotations[i], endRotations[i], t);
+          Quaternion.Slerp(startRotations[i], endRotations[i], easedT);
     }
 
     // Completed animation?
@@ -116,38 +119,37 @@ public abstract class RelayoutAction : IAction
     {
       case SpreadType.LeftToRight:
       {
-        // For example, we spread along local X
+        // Spread along local X
         float spacing = 1.2f;
         float totalWidth = (total - 1) * spacing;
         float startX = -totalWidth / 2f;
 
         localOffset = new Vector3(startX + i * spacing, 0f, 0f);
-        // Now convert local offset to world space 
+        // Convert local offset to world space
         return pile.transform.TransformPoint(localOffset);
       }
 
+      /*
       case SpreadType.Top:
       {
-        /*
-        // For a stacked approach, we can offset in local Z 
-        // so each card is "behind" the previous.
-        // might do a small offset in local Y too
-
+        // Stack cards with a small offset
         float stackOffset = 0.02f; // how far behind each card is
         localOffset = new Vector3(0f, 0f, -i * stackOffset);
-
         return pile.transform.TransformPoint(localOffset);
-        */
-
-        // default for no offset for now
-        return pile.transform.position;
       }
+      */
 
       default:
-      {
         return pile.transform.position;
-      }
     }
+  }
+
+  /// <summary>
+  /// Smooth deceleration using cubic easing.
+  /// </summary>
+  public static float EaseOutCubic(float t)
+  {
+    return 1 - Mathf.Pow(1 - t, 3);
   }
 
 }

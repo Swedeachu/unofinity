@@ -22,7 +22,7 @@ public class TurnManager
   public void OnAllInitialDealsComplete()
   {
     Debug.Log("All initial deals complete. Starting turns...");
-    currentPlayerIndex = math.max((gameManager.GetPlayers().Count - 1) / 2, 0); 
+    currentPlayerIndex = math.max((gameManager.GetPlayers().Count - 1) / 2, 0);
 
     middlePile = gameManager.GetMiddlePile().GetComponent<CardPile>();
 
@@ -112,8 +112,16 @@ public class TurnManager
     else
     {
       // No playable card, so we must draw.
-      var drawAction = new DrawCardAction(gameManager, p.CardPile);
-      gameManager.actionBatchManager.AddBatch(new List<IAction> { drawAction });
+      if (p.IsHuman)
+      {
+        var drawAction = new DrawCardAction(gameManager, p.CardPile);
+        gameManager.actionBatchManager.AddBatch(new List<IAction> { drawAction });
+      }
+      else // AI player's hands are fanned
+      {
+        var drawAction = new DrawCardAndFanAction(gameManager, p.CardPile);
+        gameManager.actionBatchManager.AddBatch(new List<IAction> { drawAction });
+      }
 
       // After drawing completes, try again
       gameManager.actionBatchManager.StartProcessing(() =>
@@ -139,8 +147,15 @@ public class TurnManager
       Debug.LogError("Could not find card data component when making card face up");
     }
 
-    // 1) remove from player's pile
-    actions.Add(new RemoveCardFromPileAction(CurrentPlayer.CardPile, cardObj));
+    // 1) remove from player's pile depending on if they are a player or not
+    if (CurrentPlayer.IsHuman)
+    {
+      actions.Add(new RemoveCardFromPileAction(CurrentPlayer.CardPile, cardObj));
+    }
+    else
+    {
+      actions.Add(new RemoveAndFanAction(CurrentPlayer.CardPile, cardObj)); // AI player piles are fanned
+    }
 
     // 2) move the card object to the middle pile
     actions.Add(new MoveCardToPileAction(cardObj, middlePile));

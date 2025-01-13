@@ -78,10 +78,6 @@ public class PlayerInputRaycaster : MonoBehaviour
     }
   }
 
-  /// <summary>
-  /// Builds the action list for removing from the player hand,
-  /// moving to the middle pile, then ends the turn.
-  /// </summary>
   private void PlayCardActionSequence(GameObject cardObj)
   {
     turnManager.playerAllowedToClick = false; // no longer allowed to click

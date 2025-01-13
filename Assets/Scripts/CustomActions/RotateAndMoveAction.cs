@@ -43,7 +43,7 @@ public class RotateAndMoveAction : IAction
     float t = Mathf.Clamp01(elapsedTime / duration);
 
     // Apply an ease-out curve to t (cubic easing for smooth deceleration)
-    float easedT = EaseOutCubic(t);
+    float easedT = RelayoutAction.EaseOutCubic(t);
 
     // Interpolate position with eased time
     cardObject.transform.position = Vector3.Lerp(startPosition, targetPosition, easedT);
@@ -57,11 +57,6 @@ public class RotateAndMoveAction : IAction
       isComplete = true;
       onComplete?.Invoke();
     }
-  }
-
-  private float EaseOutCubic(float t)
-  {
-    return 1 - Mathf.Pow(1 - t, 3);
   }
 
 }
