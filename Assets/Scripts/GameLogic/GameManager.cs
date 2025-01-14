@@ -23,6 +23,9 @@ public class GameManager : MonoBehaviour
   private List<Player> playerList = new List<Player>();
   public List<string> playerOrder; // Names of the piles in the desired order which is configurable in the editor
 
+  public static float speed = 1f;
+  public bool autoMode = false;
+
   private void Awake()
   {
     actionRunner = gameObject.AddComponent<ActionRunner>();
@@ -62,6 +65,15 @@ public class GameManager : MonoBehaviour
     AssignPiles();
 
     StartGame();
+  }
+
+  private void Update()
+  {
+    if (Input.GetKeyDown(KeyCode.A))
+    {
+      autoMode = !autoMode;
+      if (autoMode) speed = 5f; else speed = 1f;
+    }
   }
 
   private void InitializeDeck()
@@ -250,6 +262,42 @@ public class GameManager : MonoBehaviour
 
     // Start processing all action batches, and calls back the turn manager on finishing
     actionBatchManager.StartProcessing(turnManager.OnAllInitialDealsComplete);
+  }
+
+  public void Restart()
+  {
+    deck = new CardCollection(); // replace completely
+    InitializeDeck();
+
+    actionRunner.GetActiveActions().Clear();
+    actionBatchManager.GetBatches().Clear();
+    actionBatchManager.isProcessing = false;
+
+    playerList.Clear();
+
+    // empty each array of game objects stored in the piles
+    foreach (var pile in nonMiddlePiles)
+    {
+      pile.GetComponent<CardPile>().cards = new List<GameObject>().ToArray();
+    }
+    nonMiddlePiles.Clear();
+
+    // empty the array as well too
+    middlePile.GetComponent<CardPile>().cards = new List<GameObject>().ToArray();
+
+    playerPile = null; // clear reference
+    middlePile = null; // clear reference
+
+    AssignPiles(); // reassign
+
+    // destroy all cards in the scene
+    var cards = GameObject.FindObjectsOfType<CardData>();
+    foreach (CardData card in cards)
+    {
+      GameObject.Destroy(card.gameObject);
+    }
+
+    StartGame();
   }
 
   public GameObject GetMiddlePile()

@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class DrawCardAndFanAction : FanCardToPileAction
 {
+
   private GameManager gm;
 
   public DrawCardAndFanAction(GameManager gm, CardPile pile, float duration = 1.0f)

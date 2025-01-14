@@ -20,13 +20,16 @@ public class FanCardToPileAction : IAction
   protected bool isComplete;
   protected Action onComplete;
 
+  private bool bypassPausing = false;
   public bool IsComplete => isComplete;
+  public bool BypassPausing => bypassPausing;
 
   public FanCardToPileAction(GameObject card, CardPile target, float duration = 0.7f)
   {
     this.cardToMove = card;
     this.targetPile = target;
     this.duration = duration;
+    this.duration /= GameManager.speed;
   }
 
   public virtual void StartAction(Action onComplete)

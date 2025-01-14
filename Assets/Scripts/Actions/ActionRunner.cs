@@ -5,6 +5,7 @@ public class ActionRunner : MonoBehaviour
 {
 
   private List<IAction> activeActions = new List<IAction>();
+  public bool paused { get; set; } = false;
 
   public void RunActions(List<IAction> actions)
   {
@@ -19,7 +20,17 @@ public class ActionRunner : MonoBehaviour
   {
     for (int i = activeActions.Count - 1; i >= 0; i--)
     {
-      activeActions[i].UpdateAction();
+      if (i < 0 || i > activeActions.Count - 1)
+      {
+        Debug.Log("Breaking out of action runner!");
+        return; // super safety for weird stuff in the action runner got interuppted mid update logic
+      }
+
+      // if we are not paused or the actions works regardless of pausing, then call update on it each frame
+      if (!paused || activeActions[i].BypassPausing)
+      {
+        activeActions[i].UpdateAction();
+      }
     }
   }
 

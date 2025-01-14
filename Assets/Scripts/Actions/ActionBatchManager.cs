@@ -6,7 +6,7 @@ public class ActionBatchManager
 
   private Queue<List<IAction>> actionBatches = new Queue<List<IAction>>();
   private ActionRunner actionRunner;
-  private bool isProcessing;
+  public bool isProcessing;
 
   private Action onAllBatchesComplete; // Callback for when all batches are processed
 

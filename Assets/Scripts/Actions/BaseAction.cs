@@ -5,8 +5,9 @@ public abstract class BaseAction : IAction
 
   private Action _onComplete;
   private bool _isComplete;
-
+  private bool bypassPausing = false;
   public bool IsComplete => _isComplete;
+  public bool BypassPausing => bypassPausing;
 
   public void StartAction(Action onComplete)
   {

@@ -4,7 +4,7 @@ using UnityEngine;
 public class RotateAndMoveAction : IAction
 {
 
-  private GameObject cardObject;
+  private GameObject gameObject;
   private Vector3 targetPosition;
   private float targetRotation;
   private float duration;
@@ -14,18 +14,20 @@ public class RotateAndMoveAction : IAction
   private float startRotation;
   private float elapsedTime;
   private bool isComplete;
-
+  public bool bypassPausing = false;
   public bool IsComplete => isComplete;
+  public bool BypassPausing => bypassPausing;
 
-  public RotateAndMoveAction(GameObject cardObject, Vector3 targetPosition, float targetRotation, float duration)
+  public RotateAndMoveAction(GameObject gameObject, Vector3 targetPosition, float targetRotation, float duration)
   {
-    this.cardObject = cardObject;
+    this.gameObject = gameObject;
     this.targetPosition = targetPosition;
     this.targetRotation = targetRotation;
     this.duration = duration;
+    this.duration /= GameManager.speed;
 
-    startPosition = cardObject.transform.position;
-    startRotation = cardObject.transform.eulerAngles.y; // Only rotating around Y-axis
+    startPosition = gameObject.transform.position;
+    startRotation = gameObject.transform.eulerAngles.y; // Only rotating around Y-axis
   }
 
   public void StartAction(Action onComplete)
@@ -46,11 +48,11 @@ public class RotateAndMoveAction : IAction
     float easedT = RelayoutAction.EaseOutCubic(t);
 
     // Interpolate position with eased time
-    cardObject.transform.position = Vector3.Lerp(startPosition, targetPosition, easedT);
+    gameObject.transform.localPosition = Vector3.Lerp(startPosition, targetPosition, easedT);
 
     // Interpolate rotation around Y-axis with eased time
     float currentRotation = Mathf.LerpAngle(startRotation, targetRotation, easedT);
-    cardObject.transform.eulerAngles = new Vector3(0, currentRotation, 0);
+    gameObject.transform.eulerAngles = new Vector3(0, currentRotation, 0);
 
     if (t >= 1f)
     {

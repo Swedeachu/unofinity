@@ -7,7 +7,9 @@ public class CallbackAction : IAction
   private bool isComplete;
   private Action onComplete;
 
+  private bool bypassPausing = false;
   public bool IsComplete => isComplete;
+  public bool BypassPausing => bypassPausing;
 
   public CallbackAction(Action callback)
   {

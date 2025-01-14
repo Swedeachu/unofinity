@@ -8,13 +8,16 @@ public class DelayAction : IAction
   private Action onComplete;
 
   private float elapsedTime;
-  private bool isComplete;
 
+  private bool isComplete;
+  private bool bypassPausing = false;
   public bool IsComplete => isComplete;
+  public bool BypassPausing => bypassPausing;
 
   public DelayAction(float delay)
   {
     this.delay = delay;
+    this.delay /= GameManager.speed;
   }
 
   public void StartAction(Action onComplete)

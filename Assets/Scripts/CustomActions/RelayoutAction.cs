@@ -9,6 +9,9 @@ public abstract class RelayoutAction : IAction
   protected bool isComplete;
   protected Action onComplete;
   public bool IsComplete => isComplete;
+  private bool bypassPausing = false;
+  public bool BypassPausing => bypassPausing;
+
 
   // Duration for the entire re-layout animation
   protected float duration;
@@ -28,6 +31,7 @@ public abstract class RelayoutAction : IAction
   {
     this.targetPile = targetPile;
     this.duration = duration;
+    this.duration /= GameManager.speed;
   }
 
   public abstract void StartAction(Action onComplete);

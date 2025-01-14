@@ -7,6 +7,8 @@ public class Player
 
   public string Name { get; private set; }
 
+  public int score = 0;
+
   // the card pile essentially works as the hand
   public CardPile CardPile { get; private set; }
 

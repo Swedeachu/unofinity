@@ -9,6 +9,7 @@ public class TurnManager
   private GameManager gameManager;
   private CardPile middlePile;
   private int currentPlayerIndex = 0;
+  private int turnCount = 0;
 
   public bool playerAllowedToClick = false;
 
@@ -38,10 +39,42 @@ public class TurnManager
   {
     currentPlayerIndex = (currentPlayerIndex + 1) % gameManager.GetPlayers().Count;
     Player p = CurrentPlayer;
+    turnCount++;
 
     Debug.Log($"[TurnManager] Next Turn: {p.Name} (ID: {p.ID}, IsHuman: {p.IsHuman})");
 
-    if (p.IsHuman)
+    // Skip them if their hand is empty (game restarts if all hands are empty after turn 1)
+    if (p.CardPile.cards.Length <= 0 && turnCount > 1)
+    {
+      Debug.Log($"[TurnManager] {p.Name} hand is empty");
+
+      bool good = false;
+
+      // check if all players hands are empty
+      foreach (Player player in gameManager.GetPlayers())
+      {
+        if (player.CardPile.cards.Length > 0)
+        {
+          good = true;
+          break; 
+        }
+      }
+
+      if (good)
+      {
+        NextTurn();
+        return;
+      }
+      else
+      {
+        Debug.Log($"[TurnManager] RESTARTING!");
+        gameManager.Restart();
+        turnCount = 0;
+        return;
+      }
+    }
+
+    if (p.IsHuman && !gameManager.autoMode)
     {
       // First, check if they can play at least one card.
       // If not, do the auto draw-play loop and end turn.
@@ -111,6 +144,34 @@ public class TurnManager
     }
     else
     {
+      // If no cards drawable, move all the card data from the middle pile into the deck data structure,
+      // and delete all the game objects that were in the middle pile
+
+      if (gameManager.deck.Count <= 0)
+      {
+        Debug.Log("Refilling deck from middle!");
+        List<IAction> moves = new List<IAction>();
+        List<IAction> destroys = new List<IAction>();
+
+        foreach (var gameObject in middlePile.cards)
+        {
+          var cd = gameObject.GetComponent<CardData>();
+          if (cd != null)
+          {
+            gameManager.deck.Add(cd.card);
+            moves.Add(new RotateAndMoveAction(gameObject, gameManager.deckObject.transform.position, 0, 0.5f));
+            destroys.Add(new CallbackAction(() =>
+            {
+              GameObject.Destroy(gameObject);
+            }));
+          }
+        }
+        // clear internal data of the middle pile first
+        middlePile.cards = new List<GameObject>().ToArray();
+        gameManager.actionBatchManager.AddBatch(moves);
+        gameManager.actionBatchManager.AddBatch(destroys);
+      }
+
       // No playable card, so we must draw.
       if (p.IsHuman)
       {
@@ -156,6 +217,9 @@ public class TurnManager
     {
       actions.Add(new RemoveAndFanAction(CurrentPlayer.CardPile, cardObj)); // AI player piles are fanned
     }
+
+    // Score is increased for the player on playing a card
+    CurrentPlayer.score += 5;
 
     // 2) move the card object to the middle pile
     actions.Add(new MoveCardToPileAction(cardObj, middlePile));

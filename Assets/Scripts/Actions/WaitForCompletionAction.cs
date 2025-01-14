@@ -6,9 +6,11 @@ public class WaitForCompletionAction : IAction
 
   private List<IAction> actionsToWaitFor;
   private Action onComplete;
-  private bool isComplete;
 
+  private bool isComplete;
+  private bool bypassPausing = false;
   public bool IsComplete => isComplete;
+  public bool BypassPausing => bypassPausing;
 
   public WaitForCompletionAction(List<IAction> actions, Action onComplete)
   {
