@@ -123,7 +123,7 @@ public class GameManager : MonoBehaviour
           {
             Debug.LogError("Multiple Player_Pile detected in the scene!");
           }
-          // also needs to be added to the non middle piles list
+          // Also needs to be added to the non-middle piles list
           nonMiddlePiles.Add(pile.gameObject);
           break;
 
@@ -146,7 +146,6 @@ public class GameManager : MonoBehaviour
           nonMiddlePiles.Add(pile.gameObject);
           Debug.Log("Assigned Non-Middle Pile");
           break;
-
       }
     }
 
@@ -161,26 +160,19 @@ public class GameManager : MonoBehaviour
       Debug.LogError("No Middle_Pile found in the scene!");
     }
 
-    // After assigning the piles, sort the playerList based on the configured order
+    // Sort the playerList based on playerOrder
     if (playerOrder != null && playerOrder.Count > 0)
     {
       Debug.Log("Player Order Configured in Inspector: " + string.Join(", ", playerOrder));
 
       playerList.Sort((p1, p2) =>
       {
-        // Normalize names by trimming and converting to lowercase
         string name1 = p1.CardPile.gameObject.name.Trim().ToLower();
         string name2 = p2.CardPile.gameObject.name.Trim().ToLower();
 
-        Debug.Log($"Comparing {name1} and {name2}");
-
-        // Normalize the playerOrder list for comparison
         int index1 = playerOrder.FindIndex(o => o.Trim().ToLower() == name1);
         int index2 = playerOrder.FindIndex(o => o.Trim().ToLower() == name2);
 
-        Debug.Log($"Index in Player Order - {name1}: {index1}, {name2}: {index2}");
-
-        // Handle names not found in the list
         index1 = index1 == -1 ? int.MaxValue : index1;
         index2 = index2 == -1 ? int.MaxValue : index2;
 
@@ -188,77 +180,75 @@ public class GameManager : MonoBehaviour
       });
     }
 
-    // Log the sorted list
-    string plrs = "";
-    for (int i = 0; i < playerList.Count; i++)
-    {
-      Player p = playerList[i];
-      plrs += $"{p.CardPile.gameObject.name} | Index: {i} | IsHuman: {p.IsHuman}\n";
-    }
-    Debug.Log("Sorted Player List:\n" + plrs);
+    // Sort nonMiddlePiles to match the sorted playerList
+    nonMiddlePiles = new List<GameObject>(playerList.ConvertAll(player => player.CardPile.gameObject));
 
+    // Log the sorted lists
     Debug.Log($"Found {nonMiddlePiles.Count} Non-Middle Piles.");
+    Debug.Log("Sorted Non-Middle Piles: " + string.Join(", ", nonMiddlePiles.ConvertAll(p => p.name)));
+    Debug.Log("Sorted Player List: " + string.Join(", ", playerList.ConvertAll(p => p.CardPile.gameObject.name)));
   }
 
   // only virtual so MessAroundGameManager can override this for messing stuff up
   public virtual void StartGame()
   {
-    // first thing to do is wait
+    // First thing to do is wait
     var initialActions = new List<IAction>();
     initialActions.Add(new DelayAction(1f));
 
     actionBatchManager.AddBatch(initialActions);
 
-    foreach (GameObject pileObject in nonMiddlePiles)
+    for (int i = 0; i < 7; i++) // Loop to deal one card at a time to each pile
     {
-      // Get the CardPile component from the pile object
-      CardPile pile = pileObject.GetComponent<CardPile>();
-      if (pile == null)
+      foreach (GameObject pileObject in nonMiddlePiles)
       {
-        Debug.LogError("Pile does not have a CardPile component!");
-        continue;
-      }
-
-      // Prepare cards for the pile
-      List<GameObject> cardsToAdd = new List<GameObject>();
-      for (int i = 0; i < 7; i++)
-      {
-        if (deck.Count == 0)
+        // Get the CardPile component from the pile object
+        CardPile pile = pileObject.GetComponent<CardPile>();
+        if (pile == null)
         {
-          Debug.LogWarning("Deck is empty!"); // maybe not an error, just trigger some sort of reshuffle/refill action
-          return;
+          Debug.LogError("Pile does not have a CardPile component!");
+          continue;
         }
 
-        // should make a debug setting later on to make cards always face up no matter what
-        bool faceUp = pile.pileType == PileType.Player_Pile;
-
-        // Draw a card from the deck and create its GameObject
-        Card card = deck.Draw();
-        GameObject cardObject = cardObjectBuilder.MakeCard(card, faceUp);
-        cardObject.transform.position = deckObject.transform.position;
-
-        // Add the card to the pile's list (internally for tracking)
-        pile.AddCard(cardObject);
-
-        // Add the card to the list of cards to move
-        cardsToAdd.Add(cardObject);
-      }
-
-      // Create a MoveToPile action for all cards at once
-      if (pile.pileType != PileType.Player_Pile)
-      {
-        var moveToPileAction = new FanCardToPileAction(cardsToAdd[0], pile);
-        actionBatchManager.AddBatch(new List<IAction> { moveToPileAction });
-      }
-      else
-      {
-        var moveToPileAction = new MoveCardToPileAction(cardsToAdd[0], pile);
-        actionBatchManager.AddBatch(new List<IAction> { moveToPileAction });
+        // Add a CallbackAction for dealing a card to this pile
+        actionBatchManager.AddBatch(new List<IAction>
+        {
+          new CallbackAction(() =>
+          {
+            if (deck.Count == 0)
+            {
+                Debug.LogWarning("Deck is empty!"); // this would be bad
+                return;
+            }
+          
+            // Determine if the card should be face up
+            bool faceUp = pile.pileType == PileType.Player_Pile;
+          
+            // Draw a card from the deck and create its GameObject
+            Card card = deck.Draw();
+            GameObject cardObject = cardObjectBuilder.MakeCard(card, faceUp);
+            cardObject.transform.position = deckObject.transform.position;
+            
+            // Update the deck text component
+            deckTextComponent.text = deck.Count.ToString() + " Cards";
+          
+            // Create an action to move the card to the pile
+            IAction moveToPileAction;
+            if (pile.pileType != PileType.Player_Pile)
+            {
+              moveToPileAction = new FanCardToPileAction(cardObject, pile, 0.3f);
+            }
+            else
+            {
+              moveToPileAction = new MoveCardToPileAction(cardObject, pile, 0.3f);
+            }
+          
+            // Add the move action in a new batch to execute after the card creation
+            actionBatchManager.AddBatch(new List<IAction> { moveToPileAction });
+          })
+        });
       }
     }
-
-    // update
-    deckTextComponent.text = deck.Count.ToString() + " Cards";
 
     // Start processing all action batches, and calls back the turn manager on finishing
     actionBatchManager.StartProcessing(turnManager.OnAllInitialDealsComplete);

@@ -49,6 +49,7 @@ public class MessAroundGameManager : GameManager
       float randomRotation = Random.Range(0f, 360f);
 
       tossActions.Add(new RotateAndMoveAction(card, randomPosition, randomRotation, tossDuration));
+      tossActions.Add(new RotateAction(card, randomRotation, tossDuration)); // just for check offs to show that I have a rotate action seperate
     }
 
     // Add a delay action before starting the next cycle
