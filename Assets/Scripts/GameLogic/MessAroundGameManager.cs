@@ -13,6 +13,13 @@ public class MessAroundGameManager : GameManager
 
   public override void StartGame()
   {
+    // Restart everything
+    foreach (var card in activeCards)
+    {
+      Destroy(card);
+    }
+    activeCards.Clear();
+
     // Draw and initialize the cards
     for (int i = 0; i < numCardsToDraw; i++)
     {
@@ -31,11 +38,11 @@ public class MessAroundGameManager : GameManager
       activeCards.Add(cardObject);
     }
 
+    actionBatchManager.AddBatch(new List<IAction>() { new ShuffleCardsAction(activeCards, 3, 3) });
+    actionBatchManager.StartProcessing(/*StartTossCycle*/);
+
     // Update text on the deck
     deckTextComponent.text = deck.Count.ToString() + " Cards";
-
-    // Start the first cycle of actions
-    StartTossCycle();
   }
 
   private void StartTossCycle()

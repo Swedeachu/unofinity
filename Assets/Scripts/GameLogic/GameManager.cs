@@ -193,11 +193,57 @@ public class GameManager : MonoBehaviour
   public virtual void StartGame()
   {
     // First thing to do is wait
-    var initialActions = new List<IAction>();
-    initialActions.Add(new DelayAction(1f));
+    actionBatchManager.AddBatch(new List<IAction>() { new DelayAction(1f) });
 
-    actionBatchManager.AddBatch(initialActions);
+    // We do a shuffle animation action first
+    var activeCards = new List<GameObject>();
+    var cardData = new List<Card>();
 
+    // Draw and initialize the cards
+    for (int i = 0; i < 60; i++)
+    {
+      if (deck.Count == 0)
+      {
+        Debug.LogError("Deck is empty!");
+        return;
+      }
+
+      // Draw a card from the deck
+      Card card = deck.Draw();
+      GameObject cardObject = cardObjectBuilder.MakeCard(card, true);
+      cardObject.transform.position = deckObject.transform.position;
+
+      // Add the card to the active cards list
+      activeCards.Add(cardObject);
+      cardData.Add(card);
+    }
+
+    // Run the animation
+    actionBatchManager.AddBatch(new List<IAction>() { new ShuffleCardsAction(activeCards, 3, 0.8f) });
+
+    // Destroy all the card game objects and put the card data back into the deck card collection
+    actionBatchManager.AddBatch(new List<IAction>() { new CallbackAction(() =>
+    {
+      foreach(var card in activeCards)
+      {
+        if (card != null)
+        {
+          Destroy(card);
+        }
+      }
+      
+      foreach(var card in cardData)
+      {
+        deck.Add(card);
+      }
+    })});
+
+    // After shuffling we deal the cards and start the game
+    actionBatchManager.StartProcessing(DealAndStart);
+  }
+
+  private void DealAndStart()
+  {
     for (int i = 0; i < 7; i++) // Loop to deal one card at a time to each pile
     {
       foreach (GameObject pileObject in nonMiddlePiles)
