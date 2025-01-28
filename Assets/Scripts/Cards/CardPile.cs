@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -15,6 +16,28 @@ public class CardPile : MonoBehaviour
   [Header("Cards in the Pile")]
   [Tooltip("List of cards in this pile.")]
   public GameObject[] cards;
+
+  [Header("The TMP object in the Canvas")]
+  [Tooltip("Set this in the editor!")]
+  public GameObject textLabel;
+
+  [Header("The name of this player's pile")]
+  [Tooltip("Set this in the editor!")]
+  public string pileName;
+
+  private TextMeshProUGUI tmp;
+
+  public void Start()
+  {
+    if (textLabel != null)
+    {
+      tmp = textLabel.GetComponent<TextMeshProUGUI>();
+      if (tmp == null)
+      {
+        Debug.LogWarning("could not find text gui!");
+      }
+    }
+  }
 
   public void AddCard(GameObject card)
   {
@@ -36,6 +59,12 @@ public class CardPile : MonoBehaviour
     // Debug.Log($"Removed a card from {pileType}. Total cards: {cards.Length}");
 
     return card;
+  }
+
+  public void UpdateText(string extra)
+  {
+    if (tmp != null)
+      tmp.text = pileName + ": " + extra;
   }
 
   public bool ContainsCard(GameObject card) { return cards.Contains(card); }

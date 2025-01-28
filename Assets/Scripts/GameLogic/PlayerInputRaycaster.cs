@@ -90,8 +90,23 @@ public class PlayerInputRaycaster : MonoBehaviour
     // 2) move the card object to the middle pile
     actions.Add(new MoveCardToPileAction(cardObj, middlePile));
 
+    // Score is increased for the player on playing a card
+    turnManager.CurrentPlayer.score += 5;
+    turnManager.CurrentPlayer.CardPile.UpdateText(turnManager.CurrentPlayer.score.ToString());
+
+    // make text effect which fades in then kills its self
+    var effectText = gameManager.MakeTextObject(middlePile.transform.position + new Vector3(45, 0, 0), "+5 Score!");
+    actions.Add(new FadeInOutAction(effectText, 0.1f, 0.5f, 0.1f));
+
     gameManager.actionBatchManager.AddBatch(actions);
-    gameManager.actionBatchManager.StartProcessing(turnManager.EndCurrentPlayerTurn);
+
+    gameManager.actionBatchManager.StartProcessing(() =>
+    {
+      if (effectText != null) GameObject.Destroy(effectText);
+      turnManager.EndCurrentPlayerTurn();
+    });
+
+    // gameManager.actionBatchManager.StartProcessing(turnManager.EndCurrentPlayerTurn);
   }
 
 }

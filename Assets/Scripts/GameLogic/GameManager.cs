@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -22,6 +23,12 @@ public class GameManager : MonoBehaviour
 
   private List<Player> playerList = new List<Player>();
   public List<string> playerOrder; // Names of the piles in the desired order which is configurable in the editor
+  private List<GameObject> textLabels = new List<GameObject>();
+
+  private Canvas canvas;
+
+  // Set me in the editor!
+  public GameObject textPrefab;
 
   public static float speed = 1f;
   public bool autoMode = false;
@@ -58,6 +65,19 @@ public class GameManager : MonoBehaviour
       Debug.LogError("Could not find deck object in scene!");
     }
 
+    // Find the Canvas in the scene 
+    canvas = FindObjectOfType<Canvas>();
+
+    if (canvas != null)
+    {
+      // Collect all child GameObjects
+      CollectChildObjects(canvas.gameObject);
+    }
+    else
+    {
+      Debug.LogWarning("No Canvas found in the scene.");
+    }
+
     // Fill the deck up
     InitializeDeck();
 
@@ -65,6 +85,19 @@ public class GameManager : MonoBehaviour
     AssignPiles();
 
     StartGame();
+  }
+
+  private void CollectChildObjects(GameObject parent)
+  {
+    // Iterate through all child Transforms
+    foreach (Transform child in parent.transform)
+    {
+      // Add the child GameObject to the list
+      textLabels.Add(child.gameObject);
+
+      // Recursively collect children of this child
+      CollectChildObjects(child.gameObject);
+    }
   }
 
   private void Update()
@@ -192,6 +225,12 @@ public class GameManager : MonoBehaviour
   // only virtual so MessAroundGameManager can override this for messing stuff up
   public virtual void StartGame()
   {
+    // hide the UI labels
+    foreach (var obj in textLabels)
+    {
+      TransparencyUtils.SetTransparency(obj, 0);
+    }
+
     // First thing to do is wait
     actionBatchManager.AddBatch(new List<IAction>() { new DelayAction(1f) });
 
@@ -219,9 +258,10 @@ public class GameManager : MonoBehaviour
     }
 
     // Run the animation
-    actionBatchManager.AddBatch(new List<IAction>() { new ShuffleCardsAction(activeCards, 3, 0.8f) });
+    actionBatchManager.AddBatch(new List<IAction>() { new ShuffleCardsAction(activeCards, 2, 0.8f) });
 
     // Destroy all the card game objects and put the card data back into the deck card collection
+    // We do this because we were just using them temporarily as objects for the shuffle action animation
     actionBatchManager.AddBatch(new List<IAction>() { new CallbackAction(() =>
     {
       foreach(var card in activeCards)
@@ -231,12 +271,20 @@ public class GameManager : MonoBehaviour
           Destroy(card);
         }
       }
-      
+
       foreach(var card in cardData)
       {
         deck.Add(card);
       }
     })});
+
+    // Then make the UI fade in
+    var transparencyActions = new List<IAction>();
+    foreach (var obj in textLabels)
+    {
+      transparencyActions.Add(new TransparencyAction(obj, 1, 0.5f));
+    }
+    actionBatchManager.AddBatch(transparencyActions);
 
     // After shuffling we deal the cards and start the game
     actionBatchManager.StartProcessing(DealAndStart);
@@ -334,6 +382,37 @@ public class GameManager : MonoBehaviour
     }
 
     StartGame();
+  }
+
+  public GameObject MakeTextObject(Vector3 spawnPos, string text)
+  {
+    if (textPrefab != null && canvas != null)
+    {
+      // Instantiate the prefab
+      GameObject instance = Instantiate(textPrefab);
+
+      // Set the instantiated prefab as a child of the Canvas
+      instance.transform.SetParent(canvas.transform, false);
+      instance.transform.localPosition = spawnPos; 
+
+      TextMeshProUGUI textComp = instance.GetComponent<TextMeshProUGUI>();
+      if (textComp != null)
+      {
+        textComp.text = text;
+      }
+      else
+      {
+        Debug.LogWarning("no text component found on game object");
+      }
+
+      return instance;
+    }
+    else
+    {
+      Debug.LogError("Prefab or Canvas is not assigned in the Inspector.");
+    }
+
+    return null;
   }
 
   public GameObject GetMiddlePile()

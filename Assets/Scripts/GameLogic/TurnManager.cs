@@ -56,7 +56,7 @@ public class TurnManager
         if (player.CardPile.cards.Length > 0)
         {
           good = true;
-          break; 
+          break;
         }
       }
 
@@ -220,6 +220,11 @@ public class TurnManager
 
     // Score is increased for the player on playing a card
     CurrentPlayer.score += 5;
+    CurrentPlayer.CardPile.UpdateText(CurrentPlayer.score.ToString());
+    var effectText = gameManager.MakeTextObject(middlePile.transform.position + new Vector3(45, 0, 0), "+5 Score!");
+
+    // then make it fade in and then kill its self
+    actions.Add(new FadeInOutAction(effectText, 0.1f, 0.5f, 0.1f));
 
     // 2) move the card object to the middle pile
     actions.Add(new MoveCardToPileAction(cardObj, middlePile));
@@ -229,6 +234,7 @@ public class TurnManager
     // If onComplete is null, default to ending the turn
     gameManager.actionBatchManager.StartProcessing(() =>
     {
+      if (effectText != null) GameObject.Destroy(effectText); // remove this too now once all actions finish
       if (onComplete != null) onComplete();
       else EndCurrentPlayerTurn();
     });
