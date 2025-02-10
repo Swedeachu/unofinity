@@ -32,6 +32,7 @@ public class GameManager : MonoBehaviour
 
   public static float speed = 1f;
   public bool autoMode = false;
+  public static int startingCards = 7; // can be changed via pause menu, this is how many cards to deal out at the start
 
   private void Awake()
   {
@@ -65,8 +66,16 @@ public class GameManager : MonoBehaviour
       Debug.LogError("Could not find deck object in scene!");
     }
 
-    // Find the Canvas in the scene 
-    canvas = FindObjectOfType<Canvas>();
+    // Find the Canvas in the scene we care about
+    var canvases = FindObjectsOfType<Canvas>();
+    foreach (Canvas c in canvases)
+    {
+      if (c.name == "MainUI")
+      {
+        canvas = c;
+        break;
+      }
+    }
 
     if (canvas != null)
     {
@@ -292,7 +301,7 @@ public class GameManager : MonoBehaviour
 
   private void DealAndStart()
   {
-    for (int i = 0; i < 7; i++) // Loop to deal one card at a time to each pile
+    for (int i = 0; i < startingCards; i++) // Loop to deal one card at a time to each pile
     {
       foreach (GameObject pileObject in nonMiddlePiles)
       {
@@ -393,7 +402,7 @@ public class GameManager : MonoBehaviour
 
       // Set the instantiated prefab as a child of the Canvas
       instance.transform.SetParent(canvas.transform, false);
-      instance.transform.localPosition = spawnPos; 
+      instance.transform.localPosition = spawnPos;
 
       TextMeshProUGUI textComp = instance.GetComponent<TextMeshProUGUI>();
       if (textComp != null)

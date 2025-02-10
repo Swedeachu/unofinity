@@ -12,6 +12,12 @@ public abstract class RelayoutAction : IAction
   private bool bypassPausing = false;
   public bool BypassPausing => bypassPausing;
 
+  // unused by maybe needed later
+  public bool randomizeOffsets = false;
+  public float rotationOffsetEulerAngleMin = 0;
+  public float rotationOffsetEulerAngleMax = 0;
+  public Vector3 positionOffsetMax = Vector3.zero;
+  public Vector3 positionOffsetMin = Vector3.zero;
 
   // Duration for the entire re-layout animation
   protected float duration;

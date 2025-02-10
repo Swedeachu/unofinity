@@ -7,12 +7,12 @@ public class PauseMenu : MonoBehaviour
   private GameManager gameManager;
 
   // must be set in editor since its disabled by default and finding it automatically would be really jank
+  public GameObject panel;
   public Canvas canvas;
-  public ResumeButton resumeButton;
 
   // must set in editor:
-  public Vector3 resumeButtonOffScreenPosition;
-  public Vector3 resumeButtonOnScreenPosition;
+  public Vector3 offScreenPosition;
+  public Vector3 onScreenPosition;
 
   void Start()
   {
@@ -38,7 +38,7 @@ public class PauseMenu : MonoBehaviour
     }
 
     // starts off screen
-    resumeButton.gameObject.transform.position = resumeButtonOffScreenPosition;
+    panel.transform.position = offScreenPosition; 
 
     // and disable it again after messing with it
     if (canvas != null)
@@ -66,14 +66,14 @@ public class PauseMenu : MonoBehaviour
     List<IAction> actions = new List<IAction>();
     if (gameManager.actionRunner.paused) // if we are paused, now move onto the screen
     {
-      actions.Add(new RotateAndMoveAction(resumeButton.gameObject, resumeButtonOnScreenPosition, 0, 1));
+      actions.Add(new RotateAndMoveAction(panel, onScreenPosition, 0, 1));
     }
     else // if not paused, move stuff off screen
     {
       // this won't work because canvas will be disabled, we would need to defer it being disabled but also make it not interactable anymore
       // actions.Add(new RotateAndMoveAction(resumeButton.gameObject, resumeButtonOffScreenPosition, 0, 1));
       // instead I just auto set the position | WEIRD: positions are seemingly being set randomly
-      resumeButton.gameObject.transform.localPosition = resumeButtonOffScreenPosition;
+      panel.transform.localPosition = offScreenPosition;
     }
 
     // Toggle canvas on
