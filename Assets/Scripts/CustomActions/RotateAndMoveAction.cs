@@ -26,7 +26,7 @@ public class RotateAndMoveAction : IAction
     this.duration = duration;
     this.duration /= GameManager.speed;
 
-    startPosition = gameObject.transform.position;
+    startPosition = gameObject.transform.localPosition;
     startRotation = gameObject.transform.eulerAngles.y; // Only rotating around Y-axis
   }
 

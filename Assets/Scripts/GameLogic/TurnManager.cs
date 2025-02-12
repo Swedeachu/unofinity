@@ -149,27 +149,7 @@ public class TurnManager
 
       if (gameManager.deck.Count <= 0)
       {
-        Debug.Log("Refilling deck from middle!");
-        List<IAction> moves = new List<IAction>();
-        List<IAction> destroys = new List<IAction>();
-
-        foreach (var gameObject in middlePile.cards)
-        {
-          var cd = gameObject.GetComponent<CardData>();
-          if (cd != null)
-          {
-            gameManager.deck.Add(cd.card);
-            moves.Add(new RotateAndMoveAction(gameObject, gameManager.deckObject.transform.position, 0, 0.5f));
-            destroys.Add(new CallbackAction(() =>
-            {
-              GameObject.Destroy(gameObject);
-            }));
-          }
-        }
-        // clear internal data of the middle pile first
-        middlePile.cards = new List<GameObject>().ToArray();
-        gameManager.actionBatchManager.AddBatch(moves);
-        gameManager.actionBatchManager.AddBatch(destroys);
+        gameManager.RestoreDeck(); 
       }
 
       // No playable card, so we must draw.

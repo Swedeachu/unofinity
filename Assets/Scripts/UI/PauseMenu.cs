@@ -14,6 +14,8 @@ public class PauseMenu : MonoBehaviour
   public Vector3 offScreenPosition;
   public Vector3 onScreenPosition;
 
+  private bool inFlight = false;
+
   void Start()
   {
     if (canvas == null)
@@ -38,7 +40,7 @@ public class PauseMenu : MonoBehaviour
     }
 
     // starts off screen
-    panel.transform.position = offScreenPosition; 
+    panel.transform.localPosition = offScreenPosition;
 
     // and disable it again after messing with it
     if (canvas != null)
@@ -49,7 +51,7 @@ public class PauseMenu : MonoBehaviour
 
   void Update()
   {
-    if (Input.GetKeyDown(KeyCode.Escape))
+    if (!inFlight && Input.GetKeyDown(KeyCode.Escape))
     {
       TogglePause();
     }
@@ -57,6 +59,8 @@ public class PauseMenu : MonoBehaviour
 
   public void TogglePause()
   {
+    // inFlight = true;
+
     // toggle pause in game manager for action runner
     if (gameManager != null)
     {
@@ -66,23 +70,23 @@ public class PauseMenu : MonoBehaviour
     List<IAction> actions = new List<IAction>();
     if (gameManager.actionRunner.paused) // if we are paused, now move onto the screen
     {
+      canvas.gameObject.SetActive(true);
       actions.Add(new RotateAndMoveAction(panel, onScreenPosition, 0, 1));
     }
     else // if not paused, move stuff off screen
     {
-      // this won't work because canvas will be disabled, we would need to defer it being disabled but also make it not interactable anymore
-      // actions.Add(new RotateAndMoveAction(resumeButton.gameObject, resumeButtonOffScreenPosition, 0, 1));
-      // instead I just auto set the position | WEIRD: positions are seemingly being set randomly
-      panel.transform.localPosition = offScreenPosition;
+      actions.Add(new RotateAndMoveAction(panel, offScreenPosition, 0, 1));
+      // Toggle canvas on in a call back seperately to run later (Doesn't work until after the current batch but it moving offscreen too is fine)
+      if (canvas != null)
+      {
+        var cb = new CallbackAction(() =>
+        {
+          canvas.gameObject.SetActive(false);
+        });
+        cb.bypassPausing = true;
+        gameManager.actionBatchManager.AddBatch(new List<IAction> { cb });
+      }
     }
-
-    // Toggle canvas on
-    if (canvas != null)
-    {
-      canvas.gameObject.SetActive(!canvas.gameObject.activeSelf);
-    }
-
-    if (actions.Count == 0) return;
 
     // force the rotate and move actions to bypass pausing
     foreach (IAction action in actions)
@@ -96,6 +100,16 @@ public class PauseMenu : MonoBehaviour
 
     // run it immediately right in the current action set
     gameManager.actionRunner.RunActions(actions);
+
+    /* just doesn't work, don't care enough to fix something this small
+    // no longer in flight after all the above batches run
+    var f = new CallbackAction(() =>
+    {
+      inFlight = false;
+    });
+    f.bypassPausing = true;
+    gameManager.actionBatchManager.AddBatch(new List<IAction> { f });
+    */
   }
 
 }

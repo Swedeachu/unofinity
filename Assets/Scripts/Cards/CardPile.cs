@@ -85,9 +85,12 @@ public class CardPile : MonoBehaviour
 
     foreach (GameObject c in cards)
     {
-      var cd = c.GetComponent<CardData>();
-      if (cd != null)
-        if (cd.card.CanPlayOn(card)) cs.Add(c);
+      if (c != null)
+      {
+        var cd = c.GetComponent<CardData>();
+        if (cd != null)
+          if (cd.card.CanPlayOn(card)) cs.Add(c);
+      }
     }
 
     return cs;

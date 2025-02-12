@@ -29,6 +29,7 @@ public class GameManager : MonoBehaviour
 
   // Set me in the editor!
   public GameObject textPrefab;
+  public GameObject pilePrefab;
 
   public static float speed = 1f;
   public bool autoMode = false;
@@ -115,6 +116,50 @@ public class GameManager : MonoBehaviour
     {
       autoMode = !autoMode;
       if (autoMode) speed = 5f; else speed = 1f;
+    }
+  }
+
+  public void AddPlayer()
+  {
+    Debug.Log("Adding player");
+
+    // Determine the best position for the new pile (we do this kinda ass)
+    Vector3 newPilePosition = Vector3.zero;
+
+    if (nonMiddlePiles.Count > 0)
+    {
+      // Calculate an appropriate position by expanding outward from existing piles
+      float spacing = 2.5f; // Adjust spacing as needed
+      int rowSize = Mathf.CeilToInt(Mathf.Sqrt(nonMiddlePiles.Count + 1)); // Spread them in a grid
+      int row = nonMiddlePiles.Count / rowSize;
+      int col = nonMiddlePiles.Count % rowSize;
+
+      newPilePosition = new Vector3(col * spacing, 0, row * spacing);
+    }
+
+    // Instantiate new player pile
+    GameObject p = GameObject.Instantiate(pilePrefab, newPilePosition, Quaternion.identity);
+
+    p.GetComponent<MeshRenderer>().enabled = false;
+
+    var pile = p.GetComponent<CardPile>();
+    if (pile != null)
+    {
+      // Add to lists
+      nonMiddlePiles.Add(p);
+      playerList.Add(new Player(playerList.Count, false, "Player #" + playerList.Count, pile));
+
+      // Add actions to make them draw cards (starting hand amount in a new batch)
+      for (int i = 0; i < startingCards; i++)
+      {
+        DrawCardToPile(pile);
+      }
+
+      // Start processing all action batches if not already running
+      if (!actionBatchManager.isProcessing)
+      {
+        actionBatchManager.StartProcessing();
+      }
     }
   }
 
@@ -314,47 +359,90 @@ public class GameManager : MonoBehaviour
         }
 
         // Add a CallbackAction for dealing a card to this pile
-        actionBatchManager.AddBatch(new List<IAction>
-        {
-          new CallbackAction(() =>
-          {
-            if (deck.Count == 0)
-            {
-                Debug.LogWarning("Deck is empty!"); // this would be bad
-                return;
-            }
-          
-            // Determine if the card should be face up
-            bool faceUp = pile.pileType == PileType.Player_Pile;
-          
-            // Draw a card from the deck and create its GameObject
-            Card card = deck.Draw();
-            GameObject cardObject = cardObjectBuilder.MakeCard(card, faceUp);
-            cardObject.transform.position = deckObject.transform.position;
-            
-            // Update the deck text component
-            deckTextComponent.text = deck.Count.ToString() + " Cards";
-          
-            // Create an action to move the card to the pile
-            IAction moveToPileAction;
-            if (pile.pileType != PileType.Player_Pile)
-            {
-              moveToPileAction = new FanCardToPileAction(cardObject, pile, 0.3f);
-            }
-            else
-            {
-              moveToPileAction = new MoveCardToPileAction(cardObject, pile, 0.3f);
-            }
-          
-            // Add the move action in a new batch to execute after the card creation
-            actionBatchManager.AddBatch(new List<IAction> { moveToPileAction });
-          })
-        });
+        DrawCardToPile(pile);
       }
     }
 
     // Start processing all action batches, and calls back the turn manager on finishing
     actionBatchManager.StartProcessing(turnManager.OnAllInitialDealsComplete);
+  }
+
+  // this is an insane amount of callbacks 
+  private void DrawCardToPile(CardPile pile)
+  {
+    // Add a CallbackAction for dealing a card to this pile
+    actionBatchManager.AddBatch(new List<IAction>
+    {
+        new CallbackAction(() =>
+        {
+            if (deck.Count == 0)
+            {
+                Debug.Log("Deck is empty, restoring from middle pile!");
+                RestoreDeck(); // remakes the deck if needed
+            }
+
+            // callback action to draw a card after the deck is remade
+            actionBatchManager.AddBatch(new List<IAction>
+            {
+                new CallbackAction(() =>
+                {
+                    // Determine if the card should be face up
+                    bool faceUp = pile.pileType == PileType.Player_Pile;
+
+                    // Draw a card from the deck and create its GameObject
+                    Card card = deck.Draw();
+                    GameObject cardObject = cardObjectBuilder.MakeCard(card, faceUp);
+                    cardObject.transform.position = deckObject.transform.position;
+
+                    // Update the deck text component
+                    deckTextComponent.text = deck.Count.ToString() + " Cards";
+
+                    // Create an action to move the card to the pile
+                    IAction moveToPileAction;
+
+                    if (pile.pileType != PileType.Player_Pile)
+                    {
+                        moveToPileAction = new FanCardToPileAction(cardObject, pile, 0.3f);
+                    }
+                    else
+                    {
+                        moveToPileAction = new MoveCardToPileAction(cardObject, pile, 0.3f);
+                    }
+
+                    // Add the move action in a new batch to execute after the card creation
+                    actionBatchManager.AddBatch(new List<IAction> { moveToPileAction });
+                })
+            });
+        })
+    });
+  }
+
+  // Moves the middle pile back into the deck
+  public void RestoreDeck()
+  {
+    Debug.Log("Refilling deck from middle!");
+    List<IAction> moves = new List<IAction>();
+    List<IAction> destroys = new List<IAction>();
+
+    var middlePile = GetMiddlePile().GetComponent<CardPile>();
+
+    foreach (var gameObject in middlePile.cards)
+    {
+      var cd = gameObject.GetComponent<CardData>();
+      if (cd != null)
+      {
+        deck.Add(cd.card);
+        moves.Add(new RotateAndMoveAction(gameObject, deckObject.transform.position, 0, 0.5f));
+        destroys.Add(new CallbackAction(() =>
+        {
+          GameObject.Destroy(gameObject);
+        }));
+      }
+    }
+    // clear internal data of the middle pile first
+    middlePile.cards = new List<GameObject>().ToArray();
+    actionBatchManager.AddBatch(moves);
+    actionBatchManager.AddBatch(destroys);
   }
 
   public void Restart()
