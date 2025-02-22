@@ -8,7 +8,8 @@ public class WaitForCompletionAction : IAction
   private Action onComplete;
 
   private bool isComplete;
-  private bool bypassPausing = false;
+  private bool bypassPausing = true; // to avoid self caused dead locks in a now empty set of actions during a paused state, we have this as true
+                                     // this is to fix a rare problem during switching from paused to non paused states
   public bool IsComplete => isComplete;
   public bool BypassPausing => bypassPausing;
 

@@ -19,7 +19,7 @@ public class CardCountSlider : MonoBehaviour
     slider.value = GameManager.startingCards;
   }
 
-  void Changed(float value)
+  public void Changed(float value)
   {
     int roundedValue = (int)value;
 

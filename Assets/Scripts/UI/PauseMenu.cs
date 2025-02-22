@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
 
 public class PauseMenu : MonoBehaviour
@@ -15,6 +16,11 @@ public class PauseMenu : MonoBehaviour
   public Vector3 onScreenPosition;
 
   private bool inFlight = false;
+
+  // automode chaos monkey buissness
+  private AddHand addHandButton;
+  private CardCountSlider cardCountSlider;
+  private SpeedSliderControl speedSliderControl;
 
   void Start()
   {
@@ -45,13 +51,34 @@ public class PauseMenu : MonoBehaviour
     // and disable it again after messing with it
     if (canvas != null)
     {
+
+      // Find the stuff we need too for chaose monkey mode
+      speedSliderControl = FindAnyObjectByType<SpeedSliderControl>();
+      cardCountSlider = FindAnyObjectByType<CardCountSlider>();
+      addHandButton = FindAnyObjectByType<AddHand>();
+
+      if (speedSliderControl == null)
+      {
+        Debug.LogWarning("speed slider is null!");
+      }
+
+      if (cardCountSlider == null)
+      {
+        Debug.LogWarning("Card count slider is null!");
+      }
+
+      if (addHandButton == null)
+      {
+        Debug.LogWarning("Add hand button is null!");
+      }
+
       canvas.gameObject.SetActive(false);
     }
   }
 
   void Update()
   {
-    if (!inFlight && Input.GetKeyDown(KeyCode.Escape))
+    if (!inFlight && !GameManager.autoMode && Input.GetKeyDown(KeyCode.Escape))
     {
       TogglePause();
     }
@@ -110,6 +137,105 @@ public class PauseMenu : MonoBehaviour
     f.bypassPausing = true;
     gameManager.actionBatchManager.AddBatch(new List<IAction> { f });
     */
+  }
+
+  // Picks one of the following and either simulates its click action, or changes its value to something random within bounds if it is a slider, and logs it in telemetry manager.
+  // SpeedSliderControl: we don't actually want to do this because this would screw with auto mode speed, maybe we should do the slider to change it visually than back right after 
+  // CardCountSlider
+  // AddHand button
+  //
+  // Afterwards TogglePause is called again (except for AddHand that already happens after clicking it)
+  // We don't do exit button or resume button, because we obviously don't want to exit the app,
+  // and resume is always called afterwards so no point calling it randomly or manually afterwards.
+  public void ChaosMonkey()
+  {
+    // TODO: telemetry logging in a TelemetryManager object
+
+    TogglePause();
+
+    int randomValue = UnityEngine.Random.Range(1, 4);
+
+    bool runUnpauseAction = true;
+
+    var cleanUpActions = new List<IAction>();
+
+    // wait one second afterwards of doing the thing (5 seconds to make it 1 second long due to auto mode being 5x fast)
+    var delay = new DelayAction(5);
+    delay.bypassPausing = true;
+    // do it first thing in its own batch
+    gameManager.actionBatchManager.AddBatch(new List<IAction>() { delay });
+
+    if (randomValue == 1)
+    {
+      Debug.Log("Chaos Monkey: Add Hand Button");
+
+      // hit the add hand button 
+      var action = new CallbackAction(() =>
+      {
+        addHandButton.OnButtonClicked();
+        runUnpauseAction = false; // not needed because the return below but whatever
+      });
+
+      action.bypassPausing = true;
+
+      gameManager.actionBatchManager.AddBatch(new List<IAction>() { action });
+
+      return; // because add hand button calls TogglePause() on its own
+    }
+    else if (randomValue == 2)
+    {
+      Debug.Log("Chaos Monkey: Speed Slider");
+
+      // tweak the game speed slider (since we are in auto mode this won't actually have any real impact beyond visual in the UI, as auto mode is always 5x)
+      float before = speedSliderControl.slider.value;
+
+      var slideAction = new CallbackAction(() =>
+      {
+        int random = UnityEngine.Random.Range(1, 6);
+        speedSliderControl.slider.value = random;
+      });
+
+      slideAction.bypassPausing = true;
+
+      gameManager.actionBatchManager.AddBatch(new List<IAction>() { slideAction });
+
+      var cleanUp = new CallbackAction(() =>
+      {
+        speedSliderControl.slider.value = before;
+      });
+
+      cleanUp.bypassPausing = true;
+    }
+    else if (randomValue == 3)
+    {
+      Debug.Log("Chaos Monkey: Card count");
+
+      // tweak the card count slider
+
+      var action = new CallbackAction(() =>
+      {
+        int random = UnityEngine.Random.Range(1, 7);
+        cardCountSlider.slider.value = random;
+      });
+
+      action.bypassPausing = true;
+
+      gameManager.actionBatchManager.AddBatch(new List<IAction>() { action });
+    }
+
+    // except for add hand button since it already does that, we need to unpause afterwards
+    if (runUnpauseAction)
+    {
+      var action = new CallbackAction(() =>
+      {
+        TogglePause();
+      });
+      action.bypassPausing = true;
+
+      gameManager.actionBatchManager.AddBatch(new List<IAction>() { action });
+    }
+
+    gameManager.actionBatchManager.AddBatch(cleanUpActions);
   }
 
 }

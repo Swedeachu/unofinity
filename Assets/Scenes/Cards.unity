@@ -1898,11 +1898,11 @@ MonoBehaviour:
   - 'AI_One_Pile '
   - AI_Two_Pile
   - PlayerPile
+  pauseMenu: {fileID: 0}
   textPrefab: {fileID: 7242406976288467644, guid: 63564b12b135820499b219d036a4a357,
     type: 3}
   pilePrefab: {fileID: 2128793437212206481, guid: 3e0122100f0f4dc42a19a4e17be90d08,
     type: 3}
-  autoMode: 0
 --- !u!114 &592382165
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3874,6 +3874,16 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 815986010154350156, guid: d3318022b57afa34faf71aa8f8012d53,
+        type: 3}
+      propertyPath: m_LocalScale.x
+      value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 815986010154350156, guid: d3318022b57afa34faf71aa8f8012d53,
+        type: 3}
+      propertyPath: m_LocalScale.z
+      value: 200
+      objectReference: {fileID: 0}
     - target: {fileID: 815986010154350156, guid: d3318022b57afa34faf71aa8f8012d53,
         type: 3}
       propertyPath: m_LocalPosition.x

@@ -14,12 +14,15 @@ public class RotateAndMoveAction : IAction
   private float startRotation;
   private float elapsedTime;
   private bool isComplete;
+  private bool rotate = true;
   public bool bypassPausing = false;
   public bool IsComplete => isComplete;
   public bool BypassPausing => bypassPausing;
+  
 
-  public RotateAndMoveAction(GameObject gameObject, Vector3 targetPosition, float targetRotation, float duration)
+  public RotateAndMoveAction(GameObject gameObject, Vector3 targetPosition, float targetRotation, float duration, bool rotate = true)
   {
+    this.rotate = rotate;
     this.gameObject = gameObject;
     this.targetPosition = targetPosition;
     this.targetRotation = targetRotation;
@@ -51,8 +54,11 @@ public class RotateAndMoveAction : IAction
     gameObject.transform.localPosition = Vector3.Lerp(startPosition, targetPosition, easedT);
 
     // Interpolate rotation around Y-axis with eased time
-    float currentRotation = Mathf.LerpAngle(startRotation, targetRotation, easedT);
-    gameObject.transform.eulerAngles = new Vector3(0, currentRotation, 0);
+    if (rotate)
+    {
+      float currentRotation = Mathf.LerpAngle(startRotation, targetRotation, easedT);
+      gameObject.transform.eulerAngles = new Vector3(0, currentRotation, 0);
+    }
 
     if (t >= 1f)
     {

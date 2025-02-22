@@ -27,16 +27,20 @@ public class GameManager : MonoBehaviour
 
   private Canvas canvas;
 
+  public PauseMenu pauseMenu; // TurnManager uses this for project requirments of automation testing needing to chaos monkey our UI
+
   // Set me in the editor!
   public GameObject textPrefab;
   public GameObject pilePrefab;
 
   public static float speed = 1f;
-  public bool autoMode = false;
+  public static bool autoMode = false;
   public static int startingCards = 7; // can be changed via pause menu, this is how many cards to deal out at the start
 
   private void Awake()
   {
+    pauseMenu = FindAnyObjectByType<PauseMenu>();
+
     actionRunner = gameObject.AddComponent<ActionRunner>();
     actionBatchManager = new ActionBatchManager(actionRunner);
 

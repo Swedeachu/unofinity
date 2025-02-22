@@ -88,8 +88,7 @@ public class CardPile : MonoBehaviour
       if (c != null)
       {
         var cd = c.GetComponent<CardData>();
-        if (cd != null)
-          if (cd.card.CanPlayOn(card)) cs.Add(c);
+        if (cd != null) if (cd.card != null) if (cd.card.CanPlayOn(card)) cs.Add(c); // EW!!!!
       }
     }
 

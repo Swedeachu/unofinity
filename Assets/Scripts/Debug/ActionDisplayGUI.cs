@@ -92,18 +92,17 @@ public class ActionDisplayGUI : MonoBehaviour
     int batchIndex = 0;
     foreach (var batch in batches)
     {
-      // Add a section label for each batch
       ImGui.Text($"Batch {batchIndex}");
 
       int actionIndex = 1;
       foreach (var action in batch)
       {
-        ImGui.BulletText($"{actionIndex}. {action.GetType().Name}");
+        string actionName = action is CallbackAction callback ? callback.ToString() : action.GetType().Name;
+        ImGui.BulletText($"{actionIndex}. {actionName}");
         actionIndex++;
       }
       batchIndex++;
 
-      // Add spacing between batches
       ImGui.Spacing();
     }
   }
@@ -121,7 +120,8 @@ public class ActionDisplayGUI : MonoBehaviour
     int actionIndex = 1;
     foreach (var action in activeActions)
     {
-      ImGui.BulletText($"{actionIndex}. {action.GetType().Name}");
+      string actionName = action is CallbackAction callback ? callback.ToString() : action.GetType().Name;
+      ImGui.BulletText($"{actionIndex}. {actionName}");
       actionIndex++;
     }
   }

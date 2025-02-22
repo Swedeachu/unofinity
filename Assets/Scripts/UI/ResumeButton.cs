@@ -16,7 +16,10 @@ public class ResumeButton : MonoBehaviour
     PauseMenu pauseMenu = FindObjectOfType<PauseMenu>();
     if (pauseMenu != null)
     {
-      pauseMenu.TogglePause();
+      if (!GameManager.autoMode) // we don't want to pause during auto mode chaos monkey tests
+      {
+        pauseMenu.TogglePause();
+      }
     }
     else
     {

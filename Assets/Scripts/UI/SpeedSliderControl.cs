@@ -18,7 +18,7 @@ public class SpeedSliderControl : MonoBehaviour
     slider.value = GameManager.speed;
   }
 
-  void Changed(float value)
+  public void Changed(float value)
   {
     // Round the value to 3 decimal places
     float roundedValue = Mathf.Round(value * 1000f) / 1000f;
@@ -26,8 +26,11 @@ public class SpeedSliderControl : MonoBehaviour
     // Update UI text
     text.text = "GameSpeed: " + roundedValue;
 
-    // Set game speed
-    GameManager.speed = roundedValue;
+    // Set game speed for real if not in auto mode to avoid changing while in chaos monkey mode calling this function back via slider.onValueChanged
+    if (!GameManager.autoMode)
+    {
+      GameManager.speed = roundedValue;
+    }
   }
 
   void OnDestroy()

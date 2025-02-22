@@ -17,7 +17,10 @@ public class ActionBatchManager
 
   public void AddBatch(List<IAction> actions)
   {
-    actionBatches.Enqueue(actions);
+    if (actions.Count > 0)
+    {
+      actionBatches.Enqueue(actions);
+    }
   }
 
   public void StartProcessing(Action onComplete = null)

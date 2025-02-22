@@ -11,6 +11,8 @@ public class TurnManager
   private int currentPlayerIndex = 0;
   private int turnCount = 0;
 
+  private PauseMenu pauseMenu;
+
   public bool playerAllowedToClick = false;
 
   public Player CurrentPlayer => gameManager.GetPlayers()[currentPlayerIndex];
@@ -18,6 +20,7 @@ public class TurnManager
   public TurnManager(GameManager gameManager)
   {
     this.gameManager = gameManager;
+    this.pauseMenu = gameManager.pauseMenu;
   }
 
   public void OnAllInitialDealsComplete()
@@ -74,7 +77,7 @@ public class TurnManager
       }
     }
 
-    if (p.IsHuman && !gameManager.autoMode)
+    if (p.IsHuman && !GameManager.autoMode)
     {
       // First, check if they can play at least one card.
       // If not, do the auto draw-play loop and end turn.
@@ -96,7 +99,26 @@ public class TurnManager
     else
     {
       // AI Turn
+
+      // we have to do this due to project requirments
+      if (GameManager.autoMode)
+      {
+        ChaosMonkeyMode();
+      }
+
       HandleAIPlay(p);
+    }
+  }
+
+  private void ChaosMonkeyMode()
+  {
+    if (pauseMenu != null)
+    {
+      pauseMenu.ChaosMonkey();
+    }
+    else
+    {
+      Debug.LogWarning("Pause menu not found for chaos monkey mode!");
     }
   }
 
@@ -129,8 +151,11 @@ public class TurnManager
     }
   }
 
-  private void AttemptPlayOrDraw(Player p, Action onComplete)
+  // There was an infinite loop bug when ResoreDeck restores with size 0, we should make a safety that just skips the turn if restore fails, hence the last optional parameter flag.
+  private void AttemptPlayOrDraw(Player p, Action onComplete, bool alreadyTriedToRestore = false)
   {
+    bool tried = false;
+
     // Check the top card (could be null if middle pile is empty)
     GameObject topCardObj = middlePile.GetTopCard();
     Card topCard = topCardObj ? topCardObj.GetComponent<CardData>().card : null;
@@ -149,7 +174,18 @@ public class TurnManager
 
       if (gameManager.deck.Count <= 0)
       {
-        gameManager.RestoreDeck(); 
+        // If we already tried and the count is still 0, the way we handle things is too just fall out and go to the next player's turn.
+        // This might not make zero deck draw dead locks impossible, but at least a lot less probable to happen.
+        // We could theortically be stuck in a next turn skip loop because no one has a card they can play because every card is out of the deck and in a hand,
+        // and somehow none of the players have an applicable card, and the pile is huge. This seems physically impossible though assuming a legal starting deck.
+        if (alreadyTriedToRestore)
+        {
+          Debug.LogWarning("Had to skip turn after restore attempt failed");
+          EndCurrentPlayerTurn();
+          return;
+        }
+        tried = true;
+        gameManager.RestoreDeck();
       }
 
       // No playable card, so we must draw.
@@ -167,7 +203,7 @@ public class TurnManager
       // After drawing completes, try again
       gameManager.actionBatchManager.StartProcessing(() =>
       {
-        AttemptPlayOrDraw(p, onComplete);
+        AttemptPlayOrDraw(p, onComplete, tried);
       });
     }
   }
@@ -179,13 +215,13 @@ public class TurnManager
 
     // need to make the card appear face up as it is now played
     var cardData = cardObj.GetComponent<CardData>();
-    if (cardData != null)
+    if (cardData != null && cardData.card != null)
     {
       gameManager.cardObjectBuilder.SetCardPropertiesFaceUp(cardObj, cardData.card);
     }
     else
     {
-      Debug.LogError("Could not find card data component when making card face up");
+      Debug.LogWarning("Could not find card data component when making card face up");
     }
 
     // 1) remove from player's pile depending on if they are a player or not

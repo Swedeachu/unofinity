@@ -10,7 +10,7 @@ public class DelayAction : IAction
   private float elapsedTime;
 
   private bool isComplete;
-  private bool bypassPausing = false;
+  public bool bypassPausing = false;
   public bool IsComplete => isComplete;
   public bool BypassPausing => bypassPausing;
 
