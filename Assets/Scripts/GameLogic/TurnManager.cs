@@ -40,6 +40,7 @@ public class TurnManager
 
   public void NextTurn()
   {
+    gameManager.telemetryManager.Add("Turns");
     currentPlayerIndex = (currentPlayerIndex + 1) % gameManager.GetPlayers().Count;
     Player p = CurrentPlayer;
     turnCount++;
@@ -224,6 +225,8 @@ public class TurnManager
       Debug.LogWarning("Could not find card data component when making card face up");
     }
 
+    gameManager.telemetryManager.Add("Played");
+
     // 1) remove from player's pile depending on if they are a player or not
     if (CurrentPlayer.IsHuman)
     {
@@ -247,9 +250,13 @@ public class TurnManager
 
     gameManager.actionBatchManager.AddBatch(actions);
 
+    var pile = CurrentPlayer.CardPile; // save this for after to check if the hand is now empty and the player won
+
     // If onComplete is null, default to ending the turn
     gameManager.actionBatchManager.StartProcessing(() =>
     {
+      if (pile.cards.Length <= 0) gameManager.telemetryManager.Add("UnosWon");
+      if (pile.cards.Length == 1) gameManager.telemetryManager.Add("Unos");
       if (effectText != null) GameObject.Destroy(effectText); // remove this too now once all actions finish
       if (onComplete != null) onComplete();
       else EndCurrentPlayerTurn();

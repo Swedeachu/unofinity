@@ -173,6 +173,7 @@ public class PauseMenu : MonoBehaviour
       var action = new CallbackAction(() =>
       {
         addHandButton.OnButtonClicked();
+        gameManager.telemetryManager.Add("HandAdds");
         runUnpauseAction = false; // not needed because the return below but whatever
       });
 
@@ -192,6 +193,7 @@ public class PauseMenu : MonoBehaviour
       var slideAction = new CallbackAction(() =>
       {
         int random = UnityEngine.Random.Range(1, 6);
+        gameManager.telemetryManager.Add("SpeedChanges");
         speedSliderControl.slider.value = random;
       });
 
@@ -215,6 +217,7 @@ public class PauseMenu : MonoBehaviour
       var action = new CallbackAction(() =>
       {
         int random = UnityEngine.Random.Range(1, 7);
+        gameManager.telemetryManager.Add("CardCountChanges");
         cardCountSlider.slider.value = random;
       });
 

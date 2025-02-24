@@ -20,6 +20,7 @@ public class GameManager : MonoBehaviour
   public CardObjectBuilder cardObjectBuilder;
 
   private TurnManager turnManager;
+  public TelemetryManager telemetryManager;
 
   private List<Player> playerList = new List<Player>();
   public List<string> playerOrder; // Names of the piles in the desired order which is configurable in the editor
@@ -40,6 +41,7 @@ public class GameManager : MonoBehaviour
   private void Awake()
   {
     pauseMenu = FindAnyObjectByType<PauseMenu>();
+    telemetryManager = FindAnyObjectByType<TelemetryManager>();
 
     actionRunner = gameObject.AddComponent<ActionRunner>();
     actionBatchManager = new ActionBatchManager(actionRunner);
@@ -307,6 +309,7 @@ public class GameManager : MonoBehaviour
 
       // Draw a card from the deck
       Card card = deck.Draw();
+      telemetryManager.Add("Draws");
       GameObject cardObject = cardObjectBuilder.MakeCard(card, true);
       cardObject.transform.position = deckObject.transform.position;
 
@@ -395,6 +398,7 @@ public class GameManager : MonoBehaviour
 
                     // Draw a card from the deck and create its GameObject
                     Card card = deck.Draw();
+                    telemetryManager.Add("Draws");
                     GameObject cardObject = cardObjectBuilder.MakeCard(card, faceUp);
                     cardObject.transform.position = deckObject.transform.position;
 
@@ -424,6 +428,7 @@ public class GameManager : MonoBehaviour
   // Moves the middle pile back into the deck
   public void RestoreDeck()
   {
+    telemetryManager.Add("Restores");
     Debug.Log("Refilling deck from middle!");
     List<IAction> moves = new List<IAction>();
     List<IAction> destroys = new List<IAction>();
