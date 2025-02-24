@@ -149,7 +149,7 @@ public class PauseMenu : MonoBehaviour
   // and resume is always called afterwards so no point calling it randomly or manually afterwards.
   public void ChaosMonkey()
   {
-    // TODO: telemetry logging in a TelemetryManager object
+    gameManager.telemetryManager.Add("MenuOpened");
 
     TogglePause();
 
